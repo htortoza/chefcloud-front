@@ -12,14 +12,14 @@ Agregar un nav lateral izquierdo (sticky) con la lista de secciones de la carta,
 
 Dos columnas dentro del tab Estructura:
 
-- **Nav lateral izquierdo** (sticky, ancho fijo ~220px):
+- **Nav lateral izquierdo** (sticky, ancho fijo **~90px** — alineado con decisión #17 de `Modulos/ChefCloud_Modulo_00_Fundamentos.md`: "Índice de secciones: ubicación y tamaño → Izquierda, compacto (~90px), sin contador visible"; y anti-patrón #11: el nav es apoyo compacto, no puede competir visualmente con el contenido):
   - Ítem fijo **"Todas"** arriba de la lista.
   - Debajo, un ítem por sección, en el orden actual (`seccion.orden`), mostrando:
-    - Nombre de la sección
-    - Badge de franja horaria (mismo dato que hoy se ve en el `p-select` de franja del header de sección)
+    - Nombre de la sección, truncado con ellipsis (`text-overflow: ellipsis`) + atributo `title` con el nombre completo para hover — no entra completo en 90px
     - Punto/indicador rojo si algún producto de esa sección tiene estado `error` en algún canal (usar `cartaService.estadoCanal(...)`, mismo chequeo que ya existe en `estadoGlobalCanales` pero por sección en vez de por carta completa)
-  - Ítem activo (sea "Todas" o una sección) resaltado visualmente.
-  - Al fondo del nav: botón "+ Nueva sección" (se mueve desde el fondo del listado actual).
+  - **Sin badge de franja horaria en el nav** — no entra en 90px sin romper el ancho definido; la franja se sigue viendo igual que hoy en el header de la sección activa. **Sin contador de productos** — decisión #17 lo excluye explícitamente.
+  - Ítem activo (sea "Todas" o una sección) resaltado visualmente (borde/fondo, sin depender de texto extra que no entre en el ancho).
+  - Al fondo del nav: botón "+ Nueva sección" (texto corto o ícono que entre en el ancho) — se mueve desde el fondo del listado actual.
 
 - **Panel derecho**: contenido según selección del nav.
   - **"Todas" (default al entrar al tab)**: se ve el listado completo de secciones, cada una expandida — el comportamiento visual es el que existe hoy con todas las secciones sin colapsar. El botón individual de colapsar/expandir por sección **desaparece** (el nav es ahora el único mecanismo de mostrar/ocultar).
