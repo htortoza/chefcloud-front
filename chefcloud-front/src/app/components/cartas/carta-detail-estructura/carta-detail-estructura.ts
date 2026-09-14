@@ -53,8 +53,29 @@ export class CartaDetailEstructura {
 
   readonly secciones = computed(() => this.carta().secciones);
 
-  readonly todosLosProductosIds = computed(() => this.secciones().flatMap((s) => s.items.map((i) => i.productoId)));
-  readonly idsProductosEnCarta = computed(() => new Set(this.todosLosProductosIds()));
+  readonly seccionActivaId = signal<string>('todas');
+
+  readonly seccionesVisibles = computed(() => {
+    const activa = this.seccionActivaId();
+    return activa === 'todas' ? this.secciones() : this.secciones().filter((s) => s.id === activa);
+  });
+
+  readonly itemsNav = computed(() => {
+    const cartaId = this.carta().id;
+    const canales = this.canales();
+    return this.secciones().map((seccion) => ({
+      seccion,
+      tieneError: seccion.items.some((item) =>
+        canales.some((canal) => this.cartaService.estadoCanal(cartaId, canal.id, item.productoId)?.estado === 'error'),
+      ),
+    }));
+  });
+
+  readonly todosLosProductosIdsCarta = computed(() => this.secciones().flatMap((s) => s.items.map((i) => i.productoId)));
+  readonly idsProductosEnCarta = computed(() => new Set(this.todosLosProductosIdsCarta()));
+
+  /** Acotado a la vista actual del nav (una sección, o toda la carta si es "todas") — determina el scope de la selección masiva. */
+  readonly todosLosProductosIds = computed(() => this.seccionesVisibles().flatMap((s) => s.items.map((i) => i.productoId)));
 
   readonly todosSeleccionados = computed(() => {
     const ids = this.todosLosProductosIds();
@@ -63,7 +84,7 @@ export class CartaDetailEstructura {
 
   readonly estadoGlobalCanales = computed<EstadoGlobalCanal[]>(() => {
     const cartaId = this.carta().id;
-    const ids = this.todosLosProductosIds();
+    const ids = this.todosLosProductosIdsCarta();
     return this.canales().map((canal) => {
       const estados = ids.map((pid) => this.cartaService.estadoCanal(cartaId, canal.id, pid)?.estado ?? 'activo');
       const conError = estados.filter((e) => e === 'error').length;
@@ -75,6 +96,14 @@ export class CartaDetailEstructura {
 
   productosDe(seccion: Seccion) {
     return seccion.items.map((item) => this.productoService.obtenerPorId(item.productoId)).filter((p) => p !== undefined);
+  }
+
+  seleccionarSeccion(id: string): void {
+    this.seccionActivaId.set(id);
+  }
+
+  indiceDe(seccion: Seccion): number {
+    return this.secciones().findIndex((s) => s.id === seccion.id);
   }
 
   estadoDe(productoId: string, canalId: string): EstadoCanalProducto {
@@ -216,11 +245,24 @@ export class CartaDetailEstructura {
       );
       if (!confirmado) return;
     }
+    const eraActiva = this.seccionActivaId() === seccion.id;
+    const siguienteActiva = eraActiva ? this.calcularVecina(seccion.id) : this.seccionActivaId();
     this.cartaService.eliminarSeccion(this.carta().id, seccion.id);
+    this.seccionActivaId.set(siguienteActiva);
+  }
+
+  /** Vecina anterior si existe; si se eliminó la primera, la que queda primera; si no queda ninguna, "todas". */
+  private calcularVecina(seccionId: string): string {
+    const secciones = this.secciones();
+    const indice = secciones.findIndex((s) => s.id === seccionId);
+    if (indice === -1) return 'todas';
+    const vecina = secciones[indice - 1] ?? secciones[indice + 1];
+    return vecina?.id ?? 'todas';
   }
 
   agregarSeccionNueva(): void {
     const id = this.cartaService.agregarSeccion(this.carta().id, 'Nueva sección');
+    this.seccionActivaId.set(id);
     this.nombreEnEdicion.set('Nueva sección');
     this.seccionEnRenombre.set(id);
   }
