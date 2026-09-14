@@ -358,4 +358,53 @@ describe('CartaDetailEstructura', () => {
     expect(fixture.componentInstance.indiceDe(carta.secciones.find((s) => s.id === seccionA)!)).toBe(0);
     expect(fixture.componentInstance.indiceDe(carta.secciones.find((s) => s.id === seccionB)!)).toBe(1);
   });
+
+  it('el nav lateral muestra "Todas" y un ítem por cada sección', () => {
+    cartaService.agregarSeccion(cartaId, 'Entradas');
+    cartaService.agregarSeccion(cartaId, 'Postres');
+    refrescarInput();
+
+    const textos = Array.from(fixture.nativeElement.querySelectorAll('.secciones-nav__item')).map((el: any) => el.textContent.trim());
+    expect(textos.some((t: string) => t.includes('Todas'))).toBe(true);
+    expect(textos.some((t: string) => t.includes('Entradas'))).toBe(true);
+    expect(textos.some((t: string) => t.includes('Postres'))).toBe(true);
+  });
+
+  it('click en un ítem del nav muestra solo esa sección en el DOM, y "Todas" restaura el resto', () => {
+    cartaService.agregarSeccion(cartaId, 'Entradas');
+    cartaService.agregarSeccion(cartaId, 'Postres');
+    refrescarInput();
+
+    const botones = Array.from(fixture.nativeElement.querySelectorAll('.secciones-nav__item')) as HTMLButtonElement[];
+    botones.find((b) => b.textContent?.includes('Entradas'))!.click();
+    fixture.detectChanges();
+
+    let nombresVisibles = Array.from(fixture.nativeElement.querySelectorAll('.seccion__nombre')).map((el: any) => el.textContent.trim());
+    expect(nombresVisibles).toEqual(['Entradas']);
+
+    botones.find((b) => b.textContent?.includes('Todas'))!.click();
+    fixture.detectChanges();
+
+    nombresVisibles = Array.from(fixture.nativeElement.querySelectorAll('.seccion__nombre')).map((el: any) => el.textContent.trim());
+    expect(nombresVisibles.length).toBe(2);
+  });
+
+  it('el ítem del nav con producto en error muestra el indicador de error', () => {
+    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
+    const [producto] = productoService.todos();
+    cartaService.agregarItem(cartaId, seccionId, producto.id);
+    const [canal] = cartaService.canales();
+    cartaService.simularErrorCanal(cartaId, canal.id, producto.id, 'Actualizar precio', 'Timeout');
+    refrescarInput();
+
+    expect(fixture.nativeElement.querySelector('.secciones-nav__error')).toBeTruthy();
+  });
+
+  it('carta sin secciones: el nav muestra solo "Todas" y el botón de agregar, y el panel muestra el mensaje vacío', () => {
+    refrescarInput();
+
+    const textos = Array.from(fixture.nativeElement.querySelectorAll('.secciones-nav__item')).map((el: any) => el.textContent.trim());
+    expect(textos.length).toBe(2); // "Todas" + "Sección" (botón agregar)
+    expect(fixture.nativeElement.querySelector('.estructura__vacio')).toBeTruthy();
+  });
 });
