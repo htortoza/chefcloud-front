@@ -1,12 +1,11 @@
 @if (carta(); as cartaActiva) {
-  <app-page-header [titulo]="cartaActiva.nombre" />
+  <app-carta-detail-header [carta]="cartaActiva" />
 
   <p-tabs value="estructura">
     <p-tablist>
       <p-tab value="estructura">Estructura</p-tab>
       <p-tab value="asignacion">Asignación</p-tab>
       <p-tab value="experiencias">Experiencias</p-tab>
-      <p-tab value="general">General</p-tab>
     </p-tablist>
     <p-tabpanels>
       <p-tabpanel value="estructura">
@@ -17,9 +16,6 @@
       </p-tabpanel>
       <p-tabpanel value="experiencias">
         <app-carta-detail-experiencias [carta]="cartaActiva" />
-      </p-tabpanel>
-      <p-tabpanel value="general">
-        <app-carta-detail-general [carta]="cartaActiva" />
       </p-tabpanel>
     </p-tabpanels>
   </p-tabs>

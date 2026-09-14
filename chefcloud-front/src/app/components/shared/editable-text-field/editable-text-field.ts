@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, effect, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputText } from 'primeng/inputtext';
 import { Button } from 'primeng/button';
@@ -17,6 +17,17 @@ export class EditableTextField {
 
   readonly editando = signal(false);
   readonly borrador = signal('');
+
+  private readonly inputRef = viewChild<ElementRef<HTMLInputElement>>('input');
+
+  constructor() {
+    /** El atributo HTML `autofocus` no es confiable en un elemento insertado dinámicamente por `@if` — sin foco real, el blur nunca dispara y el campo queda trabado en modo edición. */
+    effect(() => {
+      if (this.editando()) {
+        this.inputRef()?.nativeElement.focus();
+      }
+    });
+  }
 
   iniciarEdicion(): void {
     this.borrador.set(this.valor());

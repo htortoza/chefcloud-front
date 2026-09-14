@@ -1,10 +1,10 @@
 @if (editando()) {
   <div class="editable-text-field editable-text-field--editando">
     <input
+      #input
       pInputText
       type="text"
       class="editable-text-field__input"
-      autofocus
       [ngModel]="borrador()"
       (ngModelChange)="borrador.set($event)"
       (keydown.enter)="confirmar()"
