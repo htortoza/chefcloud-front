@@ -1,0 +1,20 @@
+@if (editando()) {
+  <div class="editable-text-field editable-text-field--editando">
+    <input
+      pInputText
+      type="text"
+      class="editable-text-field__input"
+      autofocus
+      [ngModel]="borrador()"
+      (ngModelChange)="borrador.set($event)"
+      (keydown.enter)="confirmar()"
+      (blur)="confirmar()"
+    />
+    <p-button icon="pi pi-check" [text]="true" size="small" aria-label="Guardar" (onClick)="confirmar()" />
+  </div>
+} @else {
+  <div class="editable-text-field" (click)="iniciarEdicion()">
+    <span class="editable-text-field__valor">{{ valor() }}</span>
+    <p-button icon="pi pi-pencil" [text]="true" size="small" aria-label="Editar" (onClick)="iniciarEdicion()" />
+  </div>
+}
