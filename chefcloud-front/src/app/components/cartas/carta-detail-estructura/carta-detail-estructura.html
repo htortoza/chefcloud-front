@@ -1,0 +1,216 @@
+<h2 class="estructura__titulo-oculto">Productos de la carta, agrupados por sección, con su estado y precio por canal</h2>
+
+<div class="estructura">
+  <div class="estado-global">
+    <div class="estado-global__bloque">
+      <span class="estado-global__etiqueta">Salón</span>
+      <span class="estado-global__valor estado-global__valor--activo">Abierto</span>
+    </div>
+    @for (item of estadoGlobalCanales(); track item.canal.id) {
+      <div class="estado-global__bloque">
+        <span class="estado-global__etiqueta">{{ item.canal.nombre }}</span>
+        <span class="estado-global__valor" [class]="'estado-global__valor--' + item.severidad">{{ item.texto }}</span>
+      </div>
+    }
+  </div>
+
+  @if (seleccionados().size > 0) {
+    <div class="barra-masiva">
+      <span class="barra-masiva__contador">{{ seleccionados().size }} seleccionados</span>
+      <p-select [options]="canales()" optionLabel="nombre" optionValue="id" [ngModel]="canalBulkSeleccionado()" (ngModelChange)="canalBulkSeleccionado.set($event)" />
+      <p-button label="Activar" size="small" (onClick)="aplicarAccionMasiva('activo')" />
+      <p-button label="Pausar" size="small" [outlined]="true" (onClick)="aplicarAccionMasiva('pausado')" />
+    </div>
+  }
+
+  <div class="tabla-header">
+    <p-checkbox [binary]="true" [ngModel]="todosSeleccionados()" (ngModelChange)="toggleSeleccionarTodos()" />
+    <span class="tabla-header__etiqueta">Producto</span>
+    <div class="tabla-header__canales">
+      @for (canal of canales(); track canal.id) {
+        <span class="tabla-header__canal">{{ canal.nombre }}</span>
+      }
+    </div>
+  </div>
+
+  @if (secciones().length === 0) {
+    <p class="estructura__vacio">Esta carta todavía no tiene secciones — creá la primera para empezar a agregar productos.</p>
+  }
+
+  @for (seccion of secciones(); track seccion.id; let indice = $index) {
+    <section class="seccion">
+      <header class="seccion__header">
+        <div class="seccion__cluster-frecuente">
+          @if (seccionEnRenombre() === seccion.id) {
+            <input
+              pInputText
+              type="text"
+              class="seccion__nombre-input"
+              autofocus
+              [ngModel]="nombreEnEdicion()"
+              (ngModelChange)="nombreEnEdicion.set($event)"
+              (keydown.enter)="confirmarRenombre(seccion.id)"
+              (blur)="confirmarRenombre(seccion.id)"
+            />
+          } @else {
+            <span class="seccion__nombre">{{ seccion.nombre }}</span>
+            <p-button icon="pi pi-pencil" [text]="true" size="small" aria-label="Renombrar sección" (onClick)="iniciarRenombre(seccion.id, seccion.nombre)" />
+          }
+
+          <span class="seccion__contador">{{ seccion.items.length }} productos</span>
+
+          <p-select
+            class="seccion__franja"
+            [options]="franjas()"
+            optionLabel="nombre"
+            optionValue="id"
+            [ngModel]="seccion.franjaId"
+            (ngModelChange)="actualizarFranjaSeccion(seccion.id, $event)"
+          />
+          @if (franjaDe(seccion); as franja) {
+            @if (franja.horaInicio) {
+              <span class="seccion__franja-horas">{{ franja.horaInicio }}–{{ franja.horaFin }}</span>
+            }
+          }
+        </div>
+
+        <div class="seccion__cluster-ocasional">
+          <p-button label="Agregar producto" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="abrirSelectorProductos(seccion.id)" />
+
+          <div class="reorden" role="group" [attr.aria-label]="'Reordenar sección ' + seccion.nombre">
+            <button type="button" class="reorden__flecha" aria-label="Mover sección arriba" [disabled]="indice === 0" (click)="moverSeccion(seccion.id, 'arriba')">
+              <i class="pi pi-chevron-up"></i>
+            </button>
+            <button
+              type="button"
+              class="reorden__flecha"
+              aria-label="Mover sección abajo"
+              [disabled]="indice === secciones().length - 1"
+              (click)="moverSeccion(seccion.id, 'abajo')"
+            >
+              <i class="pi pi-chevron-down"></i>
+            </button>
+          </div>
+
+          <p-button icon="pi pi-trash" [text]="true" severity="danger" size="small" aria-label="Eliminar sección" (onClick)="eliminarSeccion(seccion)" />
+        </div>
+      </header>
+
+        @if (seccion.items.length === 0) {
+          <p class="seccion__sin-productos">Sin productos todavía.</p>
+        }
+
+        @for (producto of productosDe(seccion); track producto.id) {
+          <div class="fila-producto">
+            <div class="fila-producto__principal">
+              <p-checkbox [binary]="true" [ngModel]="seleccionados().has(producto.id)" (ngModelChange)="toggleSeleccionProducto(producto.id)" />
+              <button
+                type="button"
+                class="fila-producto__chevron"
+                [attr.aria-label]="estaExpandido(producto.id) ? 'Colapsar detalle de canales' : 'Expandir detalle de canales'"
+                (click)="toggleExpandirProducto(producto.id)"
+              >
+                <i [class]="estaExpandido(producto.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+              </button>
+              <div class="fila-producto__info">
+                <span class="fila-producto__nombre">{{ producto.nombre }}</span>
+                <span class="fila-producto__precio-base">${{ producto.precioVenta | number: '1.0-0' }}</span>
+              </div>
+              <div class="fila-producto__canales">
+                @for (canal of canales(); track canal.id) {
+                  <button
+                    type="button"
+                    class="pastilla"
+                    [attr.data-estado]="estadoDe(producto.id, canal.id)"
+                    (click)="clickPastilla(producto.id, canal.id)"
+                  >
+                    <i
+                      [class]="
+                        estadoDe(producto.id, canal.id) === 'activo'
+                          ? 'pi pi-check'
+                          : estadoDe(producto.id, canal.id) === 'pausado'
+                            ? 'pi pi-pause'
+                            : 'pi pi-exclamation-triangle'
+                      "
+                    ></i>
+                    <span>{{ tieneOverridePrecio(producto.id, canal.id) ? ('$' + (precioMostrado(producto.id, canal.id) | number: '1.0-0')) : 'Base' }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (estaExpandido(producto.id)) {
+              <div class="fila-producto__detalle">
+                <button type="button" class="fila-producto__quitar" (click)="quitarProductoDeSeccion(seccion.id, producto.id)">Quitar de esta sección</button>
+                <div class="canales-detalle">
+                  @for (canal of canales(); track canal.id) {
+                    <div class="canal-tarjeta">
+                      <span class="canal-tarjeta__nombre">{{ canal.nombre }}</span>
+                      <span class="pastilla" [attr.data-estado]="estadoDe(producto.id, canal.id)">
+                        <i
+                          [class]="
+                            estadoDe(producto.id, canal.id) === 'activo'
+                              ? 'pi pi-check'
+                              : estadoDe(producto.id, canal.id) === 'pausado'
+                                ? 'pi pi-pause'
+                                : 'pi pi-exclamation-triangle'
+                          "
+                        ></i>
+                        <span>{{ estadoDe(producto.id, canal.id) === 'activo' ? 'Activo' : estadoDe(producto.id, canal.id) === 'pausado' ? 'Pausado' : 'Error' }}</span>
+                      </span>
+
+                      @if (estadoDe(producto.id, canal.id) === 'error') {
+                        @if (diagnosticoDe(producto.id, canal.id); as diagnostico) {
+                          <div class="diagnostico">
+                            <span>Se intentó: {{ diagnostico.queSeIntento }}</span>
+                            <span>Motivo: {{ diagnostico.motivo }}</span>
+                            <span class="diagnostico__meta">{{ diagnostico.ultimoIntento }} · {{ diagnostico.intentos }} intentos</span>
+                            <p-button label="Reintentar ahora" size="small" (onClick)="reintentar(producto.id, canal.id)" />
+                          </div>
+                        }
+                      }
+
+                      <div class="canal-tarjeta__precio">
+                        <span>$</span>
+                        <p-inputNumber
+                          [ngModel]="precioMostrado(producto.id, canal.id)"
+                          (ngModelChange)="actualizarPrecio(producto.id, canal.id, $event)"
+                          [readonly]="!puedeEditar()"
+                          mode="decimal"
+                        />
+                        @if (!puedeEditar()) {
+                          <i class="pi pi-lock canal-tarjeta__candado" title="Editable solo desde Estructura (Operaciones)"></i>
+                        }
+                      </div>
+
+                      @if (tieneOverridePrecio(producto.id, canal.id)) {
+                        <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarPrecioBase(producto.id, canal.id)">Usar precio base</button>
+                      } @else {
+                        <span class="canal-tarjeta__base">Precio base: ${{ producto.precioVenta | number: '1.0-0' }}</span>
+                      }
+
+                      @if (estadoDe(producto.id, canal.id) !== 'error') {
+                        <button type="button" class="canal-tarjeta__simular" (click)="simularError(producto.id, canal.id)">Simular error (demo)</button>
+                      }
+
+                      <button type="button" class="canal-tarjeta__editar-catalogo" (click)="editarEnCatalogo(producto.id)">Editar en catálogo →</button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+    </section>
+  }
+
+  <p-button label="+ Nueva sección" [text]="true" (onClick)="agregarSeccionNueva()" />
+</div>
+
+@if (seccionParaAgregarId(); as seccionId) {
+  <app-producto-selector-dialog
+    [productosYaEnCarta]="idsProductosEnCarta()"
+    (agregar)="agregarProductosSeleccionados(seccionId, $event)"
+    (cerrar)="cerrarSelectorProductos()"
+  />
+}
