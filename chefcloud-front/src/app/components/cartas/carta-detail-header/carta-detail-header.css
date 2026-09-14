@@ -1,0 +1,53 @@
+.carta-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.carta-detail-header__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.carta-detail-header__nombre {
+  font-size: 1.1rem;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+.carta-detail-header__fila--secundaria {
+  align-items: flex-start;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.carta-detail-header__descripcion {
+  width: 50%;
+  min-width: 0;
+}
+
+.carta-detail-header__vigencia {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vigencia-resumen {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+}
+
+.vigencia-edicion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

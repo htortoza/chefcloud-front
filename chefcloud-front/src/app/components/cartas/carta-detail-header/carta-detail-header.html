@@ -1,0 +1,41 @@
+<div class="carta-detail-header">
+  <div class="carta-detail-header__fila">
+    <app-editable-text-field class="carta-detail-header__nombre" [valor]="carta().nombre" [requerido]="true" (guardar)="guardarNombre($event)" />
+    <p-button label="Publicar" severity="success" [outlined]="true" (onClick)="publicar()" />
+  </div>
+
+  <div class="carta-detail-header__fila carta-detail-header__fila--secundaria">
+    <app-editable-text-field class="carta-detail-header__descripcion" [valor]="carta().descripcionInterna" (guardar)="guardarDescripcion($event)" />
+
+    <div class="carta-detail-header__vigencia">
+      @if (editandoVigencia()) {
+        <div class="vigencia-edicion">
+          <p-select
+            [options]="opcionesTipoVigencia"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="tipoVigenciaBorrador()"
+            (ngModelChange)="tipoVigenciaBorrador.set($event)"
+          />
+          @if (tipoVigenciaBorrador() === 'fecha-especial') {
+            <input pInputText type="date" [ngModel]="rangoDesdeBorrador()" (ngModelChange)="rangoDesdeBorrador.set($event)" (keydown.enter)="confirmarVigencia()" />
+            <input pInputText type="date" [ngModel]="rangoHastaBorrador()" (ngModelChange)="rangoHastaBorrador.set($event)" (keydown.enter)="confirmarVigencia()" />
+            <p-select
+              [options]="opcionesFranjaEspecial"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="franjaEspecialBorrador()"
+              (ngModelChange)="franjaEspecialBorrador.set($event)"
+            />
+          }
+          <p-button icon="pi pi-check" [text]="true" size="small" aria-label="Guardar vigencia" (onClick)="confirmarVigencia()" />
+        </div>
+      } @else {
+        <div class="vigencia-resumen" (click)="iniciarEdicionVigencia()">
+          <span>{{ resumenVigencia() }}</span>
+          <p-button icon="pi pi-pencil" [text]="true" size="small" aria-label="Editar vigencia" (onClick)="iniciarEdicionVigencia()" />
+        </div>
+      }
+    </div>
+  </div>
+</div>
