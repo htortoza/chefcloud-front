@@ -5,7 +5,7 @@
 
 .shell-nav {
   flex: 0 0 80px;
-  max-width: 250px;
+  max-width: 100px;
   display: flex;
   flex-direction: column;
   gap: 12px;
