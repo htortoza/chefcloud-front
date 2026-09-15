@@ -1,15 +1,11 @@
 <div class="sesion-switcher">
-  <p-select [options]="opcionesRol" optionLabel="label" optionValue="value" [ngModel]="rolActual()" (ngModelChange)="cambiarRol($event)" [fluid]="true" />
-
-  @if (rolActual() === 'administrador-holding' || rolActual() === 'master') {
-    <p-select [options]="opcionesHolding()" optionLabel="nombre" optionValue="id" placeholder="Holding" [ngModel]="empresaIdActual()" (ngModelChange)="cambiarEmpresaSesion($event)" [fluid]="true" />
-  }
-
-  @if (rolActual() === 'administrador-tienda' || rolActual() === 'usuario-pos') {
-    <p-select [options]="opcionesTienda()" optionLabel="nombre" optionValue="id" placeholder="Tienda" [ngModel]="empresaIdActual()" (ngModelChange)="cambiarEmpresaSesion($event)" [fluid]="true" />
-  }
-
-  @if (rolActual() === 'comprador-externo') {
-    <p-select [options]="opcionesAccesoExterno()" optionLabel="nombre" optionValue="id" placeholder="Cuenta compradora" [ngModel]="accesoExternoIdActual()" (ngModelChange)="cambiarAccesoExterno($event)" [fluid]="true" />
-  }
+  <span class="sesion-switcher__etiqueta">Rol de prueba</span>
+  <p-select
+    [options]="opcionesRol"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="rolActual()"
+    (ngModelChange)="cambiarRol($event)"
+    [fluid]="true"
+  />
 </div>

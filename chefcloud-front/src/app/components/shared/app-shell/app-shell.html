@@ -3,57 +3,29 @@
 <div class="shell">
   @if (mostrarSidebar()) {
   <aside class="shell-nav">
-    <app-sesion-switcher />
+    <div class="marca-activa">
+      <span class="marca-activa__nombre">{{ marcaContextService.marcaActiva().nombre }}</span>
+      <span class="marca-activa__dominio">{{ marcaContextService.marcaActiva().dominio }}</span>
+    </div>
 
-    @if (!sesionService.esCompradorExterno()) {
-      <div class="empresa-selector">
-        <p-select
-          [options]="empresaService.empresasVisibles()"
-          optionLabel="nombre"
-          optionValue="id"
-          [ngModel]="empresaService.empresaActiva()?.id"
-          (ngModelChange)="empresaService.cambiarEmpresa($event)"
-          [fluid]="true"
-        />
-        @if (empresaService.cambiandoContexto()) {
-          <span class="empresa-cargando">Cargando módulos disponibles…</span>
-        }
-      </div>
-
-      <nav class="modulos-lista">
-        <div class="modulo-titulo" [class.modulo-titulo--deshabilitado]="!empresaService.moduloHabilitadoParaEmpresa()">
-          {{ empresaService.modulo.etiqueta }}
-        </div>
-
-        @if (!empresaService.moduloHabilitadoParaEmpresa()) {
-          <p class="modulo-nota">No disponible para esta empresa</p>
-        }
-
-        @for (submodulo of empresaService.modulo.submodulos; track submodulo.clave) {
-          @if (empresaService.moduloHabilitadoParaEmpresa() && submodulo.implementado) {
-            <a [routerLink]="submodulo.ruta" routerLinkActive="submodulo-activo" class="submodulo-item">
-              <i [class]="submodulo.icono"></i>
-              <span>{{ submodulo.etiqueta }}</span>
-            </a>
-          } @else {
-            <span class="submodulo-item submodulo-item--deshabilitado">
-              <i [class]="submodulo.icono"></i>
-              <span>{{ submodulo.etiqueta }}</span>
-              @if (empresaService.moduloHabilitadoParaEmpresa() && !submodulo.implementado) {
-                <span class="submodulo-etiqueta-estado">Próximamente</span>
-              }
-            </span>
-          }
-        }
-
-        @if (sesionService.puedeCrearAccesoExterno()) {
-          <a routerLink="/accesos-externos" routerLinkActive="submodulo-activo" class="submodulo-item">
-            <i class="pi pi-users"></i>
-            <span>Accesos Externos</span>
+    <nav class="modulos-lista">
+      @for (item of itemsNavegacion; track item.clave) {
+        @if (item.implementado) {
+          <a [routerLink]="item.ruta" routerLinkActive="submodulo-activo" class="submodulo-item">
+            <i class="submodulo-item__icono" [class]="item.icono"></i>
+            <span class="submodulo-item__etiqueta">{{ item.etiqueta }}</span>
           </a>
+        } @else {
+          <span class="submodulo-item submodulo-item--deshabilitado">
+            <i class="submodulo-item__icono" [class]="item.icono"></i>
+            <span class="submodulo-item__etiqueta">{{ item.etiqueta }}</span>
+            <span class="submodulo-etiqueta-estado">Próximamente</span>
+          </span>
         }
-      </nav>
-    }
+      }
+    </nav>
+
+    <app-sesion-switcher />
   </aside>
   }
 

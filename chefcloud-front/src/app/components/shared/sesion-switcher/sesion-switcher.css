@@ -1,7 +1,13 @@
 .sesion-switcher {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-bottom: 1px solid var(--p-content-border-color);
+  gap: 0.375rem;
+  padding: 0.75rem 0.25rem 0;
+  border-top: 1px solid var(--p-content-border-color);
+  margin-top: auto;
+}
+
+.sesion-switcher__etiqueta {
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
 }
