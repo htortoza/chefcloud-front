@@ -6,6 +6,35 @@ Eres un Arquitecto Frontend experto construyendo aplicaciones Angular 21 (Zonele
 
 ---
 
+## ESTADO ACTUAL DEL PROYECTO (leer primero, orienta rápido)
+
+**Construido y funcionando** (sobre datos simulados en memoria, sin backend real todavía):
+- **Productos** — CRUD de productos de marca (precio venta/oferta/costo, SKU, familia, etiquetas, grupos de modificadores con mínimo/máximo).
+- **Cartas** — secciones con vigencia horaria interna (resuelve almuerzo/cena sin clonar la carta), nav lateral compacto para saltar entre secciones o ver todas, asignación muchos-a-muchos a tiendas, overrides por canal (precio/nombre/disponibilidad), experiencias (banners). Nombre/descripción/vigencia se editan inline en un header siempre visible arriba de las tabs — no hay tab "General".
+- **Login + shell** — 5 roles (Administrador, Marketing, Operaciones, Cocina/POS, Consultor), selector de sesión de demo, sidebar con Productos/Cartas activos y Tiendas/Canales/Pedidos/Usuarios marcados "Próximamente".
+- **Transiciones de vista animadas** entre pantallas (login ↔ shell) con Angular View Transitions.
+
+**Explícitamente simulado a propósito** (no es un bug si aparece "no funciona de verdad"):
+- Login no valida credenciales — cualquier click en "Ingresar" entra con el rol elegido en el selector del sidebar.
+- Todo el estado vive en memoria del navegador — recargar la página vuelve todo a los datos mock iniciales.
+- Una sola marca mock activa (`MarcaContextService`) — no existe todavía Organización Comercial (Empresas/Marcas/Locales reales).
+- Canales externos (Uber/Rappi/etc.) son simulados — el modelo `Canal`/`OverrideCanal` existe, publicar no llama a ninguna API real.
+
+**No construido todavía:** Organización Comercial (pantalla "Mis Marcas"), Tiendas real, Canales reales (intérpretes), Pedidos/Operación, historial de auditoría por entidad, carga masiva de catálogo.
+
+Contexto de producto completo (por qué existe ChefCloud, qué NO es, casos de uso): ver la carpeta `Modulos/` en la carpeta padre del repo (fuera de este repo — insumo de diseño, no código). Fuente vigente: `ChefCloud_Modulo_00_Fundamentos.md` + los módulos 1-9 que se van agregando ahí (reemplaza `ChefCloud_Brief_Seccion_Cartas.md`, histórico). **Progreso de construcción por módulo** — revisar `Modulos/` al empezar cada sesión, puede haber módulos nuevos sin trabajar:
+
+| # | Módulo | Estado de construcción |
+|---|---|---|
+| 0 | Fundamentos | Leído — define modelo/roles/navegación/anti-patrones para todos |
+| 1 | Catálogo → Producto (vista Marketing) | Construido: foto (placeholder "Subir foto", sin backend real — ver nota abajo), nombre/descripción/precio base gateados por rol |
+| 2 | Cartas — listado | Construido: buscador en vivo, columna Vigencia real (`Carta.franjaId`), sin acción "Clonar" |
+| 3+ | (sin doc todavía en `Modulos/`) | Estructura (4): construida, con nav lateral de secciones (decisión #17, falta buscador de productos). General/Experiencias (5): General se eliminó como tab — su contenido (nombre/descripción/vigencia) vive ahora en un header editable inline (decisión #11 actualizada); Experiencias sigue como tab, sin cambios |
+
+Nota: el catálogo de Franjas horarias (`FranjaHorariaService`) y el selector por Sección en Estructura se construyeron *antes* de que existiera un Módulo 3 dedicado (basado en la sección 3 del Módulo 0) — si aparece `ChefCloud_Modulo_03_Franjas_Horarias.md`, releerlo igual por si agrega algo no cubierto (administración de franjas, herencia completa, override por canal — ver gap list abajo).
+
+---
+
 ## RESTRICCIONES ABSOLUTAS
 
 - **NUNCA** uses Tailwind CSS, PrimeFlex, Bootstrap, ni ninguna librería de utilidades externa.
@@ -219,31 +248,40 @@ src/
 
 ---
 
-## MÓDULO GIFTCARDS — REGLAS DE NEGOCIO
+## MÓDULO CATÁLOGO Y CARTAS — REGLAS DE NEGOCIO
 
-> Snapshot funcional completo (roles, permisos, qué falta, qué simular) en `docs/doc-product/Funcionalidades_App_*.md` — leerlo para entender el alcance de negocio antes de decidir si algo es "bug" o "comportamiento simulado a propósito" (ej: login sin validar, emails simulados, selector de rol de demo).
+**Documento de producto vigente:** carpeta `Modulos/` en la carpeta padre del repo (`ChefCloud_Modulo_00_Fundamentos.md`, y los módulos 1-9 que se van agregando ahí). Reemplaza el brief v3 monolítico (`ChefCloud_Brief_Seccion_Cartas.md`, histórico). Módulo 0 define modelo de datos, roles, navegación y anti-patrones transversales — los módulos 1-9 los citan, no los repiten. Mapa de módulos (Módulo 0, sección 9) trackea qué está "listo para desarrollar" vs "requiere diseño de detalle": Asignación (7) y Canales torre de control (8) siguen bloqueados por eso.
 
-### Estado siempre derivado
-`GiftcardEstado` (`sin-activar | activa | agotada | inactiva`) **nunca se guarda como campo**. Se calcula siempre con `calcularEstadoGiftcard()` a partir de `vigente` + `fechaActivacion` + `saldo` (`giftcard.model.ts`).
+### Reglas ya implementadas y verificadas
 
-### `agotada` e `inactiva` son estados terminales — ninguna acción sobre ellos
-Una giftcard `agotada` (saldo llegó a 0) ya cumplió su ciclo: no se puede activar, bloquear ni reiniciar su activación. Es el mismo tratamiento que `inactiva` (bloqueada). Los tres computed de permisos en `GiftcardDetailDrawer` (`puedeActivar`, `puedeBloquear`, `puedeReiniciarActivacion`) deben excluir **ambos** estados terminales, no solo `inactiva` — es un error fácil de reintroducir al tocar ese archivo. La barra de progreso del drawer (`progresoSaldo`) muestra **% consumido**, no % restante: por eso una giftcard agotada se ve con la barra 100% llena, no vacía.
+- **Nunca clonar una Carta para variarla.** Ninguna pantalla puede ofrecer "duplicar carta para otra tienda/canal/horario". Toda variación se resuelve con `Asignacion` (tienda), `Seccion.franjaId`/`Carta.franjaId` (rotación horaria dentro de la misma carta, ver Franjas horarias abajo) o `Carta.rangoFechas`/`franjaEspecial` (fecha especial), y `EstadoCanalCarta` (canal). `CartaService.clonar()` y el botón "Clonar" del listado se eliminaron por violar esto directamente (Módulo 0, anti-patrón #1) — no reintroducir sin que el módulo correspondiente lo pida explícitamente.
+- **"Con cambios" es un estado derivado, nunca persistido.** `Carta.estado` solo tiene `'borrador' | 'publicada'`. El listado muestra "Con cambios" calculado comparando contra `snapshotUltimaPublicacion` — nunca un campo en `Carta`.
+- **Ningún flujo fuera de Productos puede crear un Producto.** El botón "Nuevo producto" existe solo en Productos. El tab Estructura solo busca y selecciona productos ya existentes (`ProductoSelectorDialog`).
+- **Canales — nunca logo oficial de terceros.** `Canal.colorMarca`/`Canal.inicial` (badge con color de marca) reemplazan el logo real de Uber Eats/Rappi/PedidosYa — trademark. Canal nuevo: mismo patrón (color + inicial), nunca un SVG/PNG de marca ajena.
+- **Estado + precio por canal vive a nivel carta×canal×producto (`EstadoCanalCarta`).** Se hereda a TODAS las tiendas asignadas a esa carta, nunca por tienda individual. Vive en el tab **Estructura** — no hay tab "Canales" separado (se eliminó por duplicar esta misma edición y generar confusión sobre "dónde edito el precio"). Un futuro tab/pantalla "Canales" (torre de control, acuse por tienda×canal — Módulo 8, requiere diseño de detalle) es scope distinto, no construido.
+- **El operador nunca pone un producto en estado "error".** `CartaService.setEstadoOperativo` acota su tipo a `'activo' | 'pausado'` — `'error'` lo pone el sistema. Sin backend real, `CartaService.simularErrorCanal` es acción de demo (link "Simular error (demo)" en la UI) para poder probar diagnóstico + reintento — nunca ocultarla sin dejar otra vía al estado en el demo. `reintentar()` en este demo siempre resuelve a `'activo'`.
+- **Un producto pertenece a una sola sección a la vez.** `CartaService.agregarItem` es no-op silencioso si el producto ya está en otra sección de esa carta. `ProductoSelectorDialog` lo refleja con badge "Ya en esta carta" + checkbox deshabilitado, para que no sea un no-op sorpresivo.
+- **Selector real de "Agregar producto"** — `ProductoSelectorDialog`, modal grande con filtro de texto + familia, selección múltiple, paginado.
+- **Roles con permiso por campo (Módulo 0, sección 4).** `puedeEditarOperacion`/`puedeEditarMarketing` (`roles.model.ts`) — Operaciones edita precio+estado desde Estructura; Marketing edita nombre+descripción+foto desde Producto (Catálogo), viendo precio/estado con candado de solo lectura. El permiso bloquea el campo, no la pantalla. En Producto, "precio de venta base" es de Operaciones (Módulo 1, sección 3, punto 2) — distinto del precio *por canal*, que también es de Operaciones pero vive en `EstadoCanalCarta`.
+- **Foto de producto — placeholder sin funcionalidad real todavía.** El usuario aclaró que las imágenes las almacena la propia plataforma (no URL externa) — mecanismo de guardado real (dónde/cómo se sube) sin definir aún. `ProductoDetailDrawer` muestra preview + botón "Subir foto" deshabilitado/sin acción (comentario `ponytail:` en el HTML). No implementar upload real (ni siquiera mock con data URI) sin antes preguntar cómo se va a resolver — ver memoria `feedback_ask_before_assuming_storage_mechanism`.
+- **Override de nombre y descripción por canal (Módulo 0, sección 3 y decisión #14).** `EstadoCanalCarta` tiene `precio`/`estado`/`nombre`/`descripcion`, los 4 independientes entre sí. `ProductoDetailDrawer` muestra la sección "Por canal" cuando llega con `cartaId` de contexto.
+- **Landing directo en Estructura de la carta, primera tab (Módulo 0, decisión #11, actualizada).** `<p-tabs value="estructura">` en `CartaDetail`, orden de tabs Estructura/Asignación/Experiencias — General **ya no es un tab**, se eliminó entero. Nombre, descripción interna y vigencia (tipo + fecha + franja) se editan inline desde `CartaDetailHeader`, siempre visible arriba de las tabs — cada campo es su propio "texto + lápiz → input + check, Enter/blur guarda" (`EditableTextField`, compartido en `components/shared/`). "Publicar" vive en ese mismo header. Pendiente todavía: saltar el listado de cartas y resolver "carta activa según vigencia horaria ahora mismo" (ver pendientes abajo) — eso es un salto más grande, no solo el tab.
+- **Nav lateral de secciones en Estructura (Módulo 0, decisión #17, parcial).** Índice compacto a la izquierda (~90px, sin contador — respeta anti-patrón #11 de no competir visualmente con el contenido), ítem "Todas" + uno por sección con punto rojo si algún producto de esa sección tiene estado `error` en algún canal. Click en una sección oculta el resto; click en "Todas" restaura el listado completo. Reemplaza el colapsar/expandir individual que tenía cada sección — `Seccion.colapsada` se eliminó del modelo. **Falta todavía:** el buscador de productos que completa la decisión #17 (ver pendientes abajo).
+- **Link "Editar en catálogo" desde la fila expandida (Módulo 0, sección 5 y decisión #12).** `CartaDetailEstructura.editarEnCatalogo()` navega a `/productos` con `productoId`+`cartaId` como query params; `ProductoDetailDrawer` muestra "Volver a la carta". Solo navegación — nunca fusión de datos.
+- **Franjas horarias — catálogo reutilizable a nivel Marca (Módulo 0, sección 3 y decisión #15).** `FranjaHorariaService` (marca-scoped, mismo patrón que `ProductoService`) mantiene el catálogo (`FRANJA_GENERAL_ID` = "General", no eliminable, siempre primera, sin horas). `Seccion.franjaId` y `Carta.franjaId` referencian una franja por id — nunca horas sueltas escritas a mano (anti-patrón #12). Selector `p-select` en el header de cada sección en Estructura; `Carta.franjaId` hoy solo se lee (columna "Vigencia" del listado de Cartas) — todavía no tiene UI de edición propia (llegaría con Módulo 5, General/Experiencias). **Sin construir todavía:** administración de franjas fuera del selector rápido (Módulo 0, pendiente #1 — sin bloquear), herencia explícita Carta→Sección→Producto más allá de los niveles Carta y Sección, y override de horario por canal (`franjaId` dentro de `canalOverride`, pendiente #2).
+- **Listado de Cartas (Módulo 2).** `CartaList` — pantalla de paso, no destino (Módulo 0, decisión #10/#11: el flujo normal aterriza directo en Estructura, este listado es solo para crear una carta o cambiar a otra). Buscador por nombre en vivo, columnas Nombre/Vigencia/Tiendas asignadas/Estado/Última publicación — sin columna "Destino" (anti-patrón #5) y sin fila duplicada por tienda (anti-patrón #2, una carta con 8 tiendas es una fila). **Sin construir todavía:** el salto automático a la carta activa sin pasar por este listado (ver pendiente de landing en la sección de abajo) — hoy sigue siendo necesario hacer clic acá para llegar a una carta.
 
-### Auditoría de movimientos
-Todo `Movimiento` (creación, venta, uso, ajuste) lleva `usuario: string` — quién ejecutó la acción. Cualquier método nuevo en `GiftcardService` que empuje un movimiento (`crear`, `activar`, `bloquear`, `reiniciarActivacion`) debe incluir `usuario`. Hoy no hay auth real: se usa la constante `USUARIO_ACTUAL` en `giftcard.service.ts` como placeholder.
+### Pendientes del Módulo 0 sin implementar todavía (gap real, no asumir hecho)
 
-### Activación de giftcards — sin wizard global
-No existe botón "Activar giftcard" a nivel general. La activación se hace solo desde:
-1. El drawer de detalle (`GiftcardDetailDrawer`) de una giftcard puntual.
-2. El drill-in a una campaña específica (`campana-card-grid` → filtra Códigos por esa campaña).
-
-No reintroducir un wizard de activación global — fue removido deliberadamente por ser redundante con estos dos flujos.
-
-### Campañas archivadas
-Al archivar una campaña (`Campana.archivada = true`), sus giftcards **desaparecen del listado general de "Códigos"** (`giftcard-list.ts`, computed `filas`), pero siguen visibles si se filtra explícitamente por esa campaña (drill-in desde Campañas → "Ver archivadas" → click en la card). El filtro vive en `filas()`: `ocultaPorArchivada = !filtroCampana && campana?.archivada === true`.
-
-### Multi-tenant
-Todo dato de Giftcard/Campaña está scoped por `empresaId`. Los computed de servicio (`giftcardsDeEmpresaActiva`, `campanasDeEmpresaActiva`) filtran contra `EmpresaService.empresaActiva()` — nunca leer `_giftcards`/`_campanas` sin pasar por ese filtro.
+- **Landing automático en la carta activa, saltando el listado (Módulo 0, sección 5, decisión #10).** Hoy se aterriza en `/cartas` (listado) y hay que hacer clic en una carta. Falta resolver "cuál carta está vigente ahora mismo" (según franja horaria) y saltar directo a su Estructura tras elegir marca — requisito de producto, no solo estilo.
+- **Buscador de productos en Estructura (Módulo 0, decisión #17 — mitad pendiente).** El índice lateral de secciones **ya está construido** (ver regla arriba). Falta el buscador de productos en sí — hoy para encontrar un producto puntual hay que recorrer las secciones a mano o usar el nav para acotar a una sección.
+- **Horario con herencia 3 niveles (Carta→Sección→Producto) y override por canal (Módulo 0, sección 3 y 8 pendiente #2).** Solo existe a nivel Sección hoy — falta el nivel Carta, el nivel Producto, y `franjaId` dentro de `canalOverride`. Mecánica exacta del override por canal queda pendiente de definir en el módulo 0 mismo.
+- **Reordenar productos dentro de una sección** y **mover un producto de una sección a otra** (Módulo 0, sección 8, pendientes #4 y #6) — ninguno implementado; hoy solo se reordenan secciones completas.
+- **Qué pasa al eliminar una sección con productos** (Módulo 0, sección 8, pendiente #3) — resuelto hoy con un `window.confirm` nativo como simplificación temporal, no la solución final (mover a "Sin categoría" u otra, a definir).
+- **Pantalla Tienda con botón único "Desactivar todos los canales"** (Módulo 6, decisión #16) — no existe todavía (nav item "Próximamente").
+- **Canales — torre de control, matriz Tienda×Canal** (Módulo 8) — requiere diseño de detalle antes de construir (pendiente #8), no existe todavía (nav item "Próximamente").
+- **Asignación — diseño de detalle** (Módulo 7) — requiere diseño de detalle antes de construir (pendiente #7), pantalla actual es la del diseño original, sin cambios.
+- **Auditoría** (Módulo 9) — sin cambios respecto al diseño original, no construida todavía.
 
 ---
 
@@ -336,6 +374,15 @@ Las coordenadas de click de la herramienta `computer` (basada en screenshot) no 
 Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'Ingresar').click();
 ```
 Evitar loops largos con múltiples `await` dentro de un solo `javascript_tool` — en este entorno han causado timeouts de 45s aun cuando la página seguía respondiendo normalmente (confirmado con una llamada simple `1+1` inmediatamente después). Preferir varias llamadas cortas y secuenciales en vez de un solo script con loop.
+
+---
+
+## REPOSITORIO Y CONTROL DE VERSIONES
+
+- **Remoto:** `https://github.com/htortoza/chefcloud-front` (privado), rama `main`.
+- **Convención de commits:** `feat(área): qué y por qué` en español (ej. `feat(gobernanza): ...`, `feat(login+ui): ...`) — revisar `git log --oneline` antes de escribir un mensaje nuevo para mantener el estilo.
+- **Nunca commitear ni pushear sin pedido explícito del usuario en ese turno** — aunque el trabajo esté terminado y verificado, se queda en el working tree hasta que lo pidan.
+- `ref-1.png` en la raíz del repo de `Motor-front-web` está deliberadamente sin trackear (no se sabe su propósito, no se usa en el código) — no agregarlo a menos que el usuario lo pida.
 
 ---
 
