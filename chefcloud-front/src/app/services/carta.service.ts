@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Banner, Carta, Asignacion, Canal, EstadoCanalCarta, EstadoCanalProducto, EstadoCarta, FRANJA_GENERAL_ID, Seccion } from '../data/cartas.model';
+import { Carta, Asignacion, Canal, EstadoCanalCarta, EstadoCanalProducto, EstadoCarta, FRANJA_GENERAL_ID, Seccion } from '../data/cartas.model';
 import { TIENDAS_MOCK, TiendaMock } from '../data/tienda-mock.data';
 import { MarcaContextService } from './marca-context.service';
 
@@ -101,10 +101,6 @@ const CARTAS_SEED: Carta[] = (
           ],
         },
       ],
-      banners: [
-        { id: 'banner-seed-1', texto: '20% de descuento en pedidos sobre $25.000', link: '/cartas' },
-        { id: 'banner-seed-2', texto: 'Nuevo: Pisco Sour de la casa', link: '/cartas' },
-      ],
     },
     {
       id: 'carta-seed-2',
@@ -128,7 +124,6 @@ const CARTAS_SEED: Carta[] = (
           ],
         },
       ],
-      banners: [{ id: 'banner-seed-3', texto: 'Solo por Fiestas Patrias', link: '/cartas' }],
     },
   ] as Carta[]
 ).map((carta) =>
@@ -192,7 +187,6 @@ export class CartaService {
       tipoVigencia: 'regular',
       franjaId: FRANJA_GENERAL_ID,
       secciones: [],
-      banners: [],
     };
     this._cartas.update((lista) => [...lista, nueva]);
     return id;
@@ -354,17 +348,4 @@ export class CartaService {
     return this._cartas().filter((c) => c.secciones.some((s) => s.items.some((i) => i.productoId === productoId))).length;
   }
 
-  banners(cartaId: string): Banner[] {
-    return this._cartas().find((c) => c.id === cartaId)?.banners ?? [];
-  }
-
-  agregarBanner(cartaId: string, texto: string, link: string): string {
-    const bannerId = siguienteId('banner');
-    this.mutarCarta(cartaId, (c) => ({ ...c, banners: [...c.banners, { id: bannerId, texto, link }] }));
-    return bannerId;
-  }
-
-  eliminarBanner(cartaId: string, bannerId: string): void {
-    this.mutarCarta(cartaId, (c) => ({ ...c, banners: c.banners.filter((b) => b.id !== bannerId) }));
-  }
 }

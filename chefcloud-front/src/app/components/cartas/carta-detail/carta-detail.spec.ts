@@ -38,4 +38,9 @@ describe('CartaDetail', () => {
     const valores = Array.from(fixture.nativeElement.querySelectorAll('p-tab')).map((el: any) => el.getAttribute('value'));
     expect(valores).not.toContain('general');
   });
+
+  it('no muestra el tab Experiencias — se eliminó junto con la funcionalidad de banners', () => {
+    const valores = Array.from(fixture.nativeElement.querySelectorAll('p-tab')).map((el: any) => el.getAttribute('value'));
+    expect(valores).not.toContain('experiencias');
+  });
 });

@@ -27,12 +27,6 @@ export interface Seccion {
   items: ItemCarta[];
 }
 
-export interface Banner {
-  id: string;
-  texto: string;
-  link: string;
-}
-
 export interface Carta {
   id: string;
   marcaId: string;
@@ -47,7 +41,6 @@ export interface Carta {
   ultimaPublicacionEn?: string;
   snapshotUltimaPublicacion?: string;
   secciones: Seccion[];
-  banners: Banner[];
 }
 
 export interface Asignacion {

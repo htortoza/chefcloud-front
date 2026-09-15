@@ -4,7 +4,6 @@ import { CartaService } from '../../../services/carta.service';
 import { CartaDetailHeader } from '../carta-detail-header/carta-detail-header';
 import { CartaDetailEstructura } from '../carta-detail-estructura/carta-detail-estructura';
 import { CartaDetailAsignacion } from '../carta-detail-asignacion/carta-detail-asignacion';
-import { CartaDetailExperiencias } from '../carta-detail-experiencias/carta-detail-experiencias';
 
 @Component({
   selector: 'app-carta-detail',
@@ -17,7 +16,6 @@ import { CartaDetailExperiencias } from '../carta-detail-experiencias/carta-deta
     CartaDetailHeader,
     CartaDetailEstructura,
     CartaDetailAsignacion,
-    CartaDetailExperiencias,
   ],
   templateUrl: './carta-detail.html',
   styleUrl: './carta-detail.css',
