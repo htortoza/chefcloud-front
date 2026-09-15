@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { CrearProductoPayload, Familia, Producto } from '../data/catalogo.model';
+import { CrearProductoPayload, Categoria, Producto } from '../data/catalogo.model';
 import { MarcaContextService } from './marca-context.service';
 
 // Arranca en 100 para no colisionar con los ids literales de PRODUCTOS_MOCK (producto-1..11) —
@@ -12,14 +12,14 @@ function siguienteId(prefijo: string): string {
 
 const MARCA_ID_MOCK = 'marca-1';
 
-const FAMILIAS_MOCK: Familia[] = [
-  { id: 'familia-entradas', marcaId: MARCA_ID_MOCK, nombre: 'Entradas' },
-  { id: 'familia-platos', marcaId: MARCA_ID_MOCK, nombre: 'Platos de fondo' },
-  { id: 'familia-bebidas', marcaId: MARCA_ID_MOCK, nombre: 'Bebidas' },
-  { id: 'familia-postres', marcaId: MARCA_ID_MOCK, nombre: 'Postres' },
-  { id: 'familia-sopas', marcaId: MARCA_ID_MOCK, nombre: 'Sopas' },
-  { id: 'familia-sandwiches', marcaId: MARCA_ID_MOCK, nombre: 'Sándwiches' },
-  { id: 'familia-guarniciones', marcaId: MARCA_ID_MOCK, nombre: 'Guarniciones' },
+const CATEGORIAS_MOCK: Categoria[] = [
+  { id: 'categoria-entradas', marcaId: MARCA_ID_MOCK, nombre: 'Entradas' },
+  { id: 'categoria-platos', marcaId: MARCA_ID_MOCK, nombre: 'Platos de fondo' },
+  { id: 'categoria-bebidas', marcaId: MARCA_ID_MOCK, nombre: 'Bebidas' },
+  { id: 'categoria-postres', marcaId: MARCA_ID_MOCK, nombre: 'Postres' },
+  { id: 'categoria-sopas', marcaId: MARCA_ID_MOCK, nombre: 'Sopas' },
+  { id: 'categoria-sandwiches', marcaId: MARCA_ID_MOCK, nombre: 'Sándwiches' },
+  { id: 'categoria-guarniciones', marcaId: MARCA_ID_MOCK, nombre: 'Guarniciones' },
 ];
 
 const PRODUCTOS_MOCK: Producto[] = [
@@ -31,7 +31,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 2500,
     precioCosto: 900,
     sku: 'EMP-001',
-    familiaId: 'familia-entradas',
+    categoriaId: 'categoria-entradas',
     etiquetas: ['clásico'],
     gruposModificadores: [],
     activo: true,
@@ -45,7 +45,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioOferta: 8900,
     precioCosto: 4200,
     sku: 'LOM-001',
-    familiaId: 'familia-platos',
+    categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
     gruposModificadores: [
       {
@@ -69,7 +69,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 2200,
     precioCosto: 700,
     sku: 'BEB-001',
-    familiaId: 'familia-bebidas',
+    categoriaId: 'categoria-bebidas',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -82,7 +82,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 6900,
     precioCosto: 2500,
     sku: 'CAU-001',
-    familiaId: 'familia-entradas',
+    categoriaId: 'categoria-entradas',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -95,7 +95,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 8900,
     precioCosto: 3500,
     sku: 'CEV-001',
-    familiaId: 'familia-entradas',
+    categoriaId: 'categoria-entradas',
     etiquetas: ['sin gluten'],
     gruposModificadores: [],
     activo: true,
@@ -108,7 +108,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 12900,
     precioCosto: 5200,
     sku: 'ARR-001',
-    familiaId: 'familia-platos',
+    categoriaId: 'categoria-platos',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -121,7 +121,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 10900,
     precioCosto: 4300,
     sku: 'POL-001',
-    familiaId: 'familia-platos',
+    categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
     gruposModificadores: [
       {
@@ -146,7 +146,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 2500,
     precioCosto: 800,
     sku: 'BEB-002',
-    familiaId: 'familia-bebidas',
+    categoriaId: 'categoria-bebidas',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -159,7 +159,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 4500,
     precioCosto: 1600,
     sku: 'BEB-003',
-    familiaId: 'familia-bebidas',
+    categoriaId: 'categoria-bebidas',
     etiquetas: ['con alcohol'],
     gruposModificadores: [],
     activo: true,
@@ -172,7 +172,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 4200,
     precioCosto: 1500,
     sku: 'POS-001',
-    familiaId: 'familia-postres',
+    categoriaId: 'categoria-postres',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -185,7 +185,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 3800,
     precioCosto: 1300,
     sku: 'POS-002',
-    familiaId: 'familia-postres',
+    categoriaId: 'categoria-postres',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -198,7 +198,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 7500,
     precioCosto: 2800,
     sku: 'ANT-001',
-    familiaId: 'familia-entradas',
+    categoriaId: 'categoria-entradas',
     etiquetas: ['clásico'],
     gruposModificadores: [],
     activo: true,
@@ -211,7 +211,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 13900,
     precioCosto: 5600,
     sku: 'TAC-001',
-    familiaId: 'familia-platos',
+    categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
     gruposModificadores: [],
     activo: true,
@@ -224,7 +224,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 4800,
     precioCosto: 1700,
     sku: 'BEB-004',
-    familiaId: 'familia-bebidas',
+    categoriaId: 'categoria-bebidas',
     etiquetas: ['con alcohol'],
     gruposModificadores: [],
     activo: true,
@@ -237,7 +237,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 3900,
     precioCosto: 1400,
     sku: 'POS-003',
-    familiaId: 'familia-postres',
+    categoriaId: 'categoria-postres',
     etiquetas: ['clásico'],
     gruposModificadores: [],
     activo: true,
@@ -250,7 +250,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 10900,
     precioCosto: 4600,
     sku: 'SOP-001',
-    familiaId: 'familia-sopas',
+    categoriaId: 'categoria-sopas',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -263,7 +263,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 8500,
     precioCosto: 3400,
     sku: 'SOP-002',
-    familiaId: 'familia-sopas',
+    categoriaId: 'categoria-sopas',
     etiquetas: ['clásico'],
     gruposModificadores: [],
     activo: true,
@@ -276,7 +276,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 6500,
     precioCosto: 2600,
     sku: 'SAN-001',
-    familiaId: 'familia-sandwiches',
+    categoriaId: 'categoria-sandwiches',
     etiquetas: ['best-seller'],
     gruposModificadores: [],
     activo: true,
@@ -289,7 +289,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 5900,
     precioCosto: 2300,
     sku: 'SAN-002',
-    familiaId: 'familia-sandwiches',
+    categoriaId: 'categoria-sandwiches',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -302,7 +302,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 3200,
     precioCosto: 1100,
     sku: 'GUA-001',
-    familiaId: 'familia-guarniciones',
+    categoriaId: 'categoria-guarniciones',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -315,7 +315,7 @@ const PRODUCTOS_MOCK: Producto[] = [
     precioVenta: 1800,
     precioCosto: 500,
     sku: 'GUA-002',
-    familiaId: 'familia-guarniciones',
+    categoriaId: 'categoria-guarniciones',
     etiquetas: [],
     gruposModificadores: [],
     activo: true,
@@ -325,10 +325,10 @@ const PRODUCTOS_MOCK: Producto[] = [
 @Injectable({ providedIn: 'root' })
 export class ProductoService {
   private readonly marcaContextService = inject(MarcaContextService);
-  private readonly _familias = signal<Familia[]>(FAMILIAS_MOCK);
+  private readonly _categorias = signal<Categoria[]>(CATEGORIAS_MOCK);
   private readonly _productos = signal<Producto[]>(PRODUCTOS_MOCK);
 
-  readonly familias = computed(() => this._familias().filter((f) => f.marcaId === this.marcaContextService.marcaActiva().id));
+  readonly categorias = computed(() => this._categorias().filter((f) => f.marcaId === this.marcaContextService.marcaActiva().id));
 
   /** Solo productos activos — Productos distingue "archivado" mostrándolos aparte, ver `todos()`. */
   readonly productos = computed(() =>

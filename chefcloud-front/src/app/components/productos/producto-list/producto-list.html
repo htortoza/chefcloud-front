@@ -1,0 +1,45 @@
+<app-page-header titulo="Productos">
+  <p-button label="Nuevo producto" icon="pi pi-plus" (onClick)="abrirCreacion()" />
+</app-page-header>
+
+<p-table [value]="filas()" dataKey="id" class="productos-tabla">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Nombre</th>
+      <th>SKU</th>
+      <th>Precio base</th>
+      <th>Categoría</th>
+      <th># Cartas</th>
+      <th>Estado</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-fila>
+    <tr (click)="abrirEdicion(fila)">
+      <td>{{ fila.nombre }}</td>
+      <td>{{ fila.sku }}</td>
+      <td>{{ fila.precioVenta | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</td>
+      <td>{{ fila.categoriaNombre }}</td>
+      <td>{{ fila.cartasQueLoUsan }}</td>
+      <td>
+        <p-tag
+          class="productos-estado-tag"
+          [severity]="fila.activo ? 'success' : 'secondary'"
+          [value]="fila.activo ? 'Activo' : 'Archivado'"
+        />
+      </td>
+      <td>
+        <p-button
+          [label]="fila.activo ? 'Archivar' : 'Activar'"
+          [text]="true"
+          size="small"
+          (onClick)="toggleActivo(fila); $event.stopPropagation()"
+        />
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+@if (productoEnEdicion() !== undefined) {
+  <app-producto-detail-drawer [producto]="productoEnEdicion() ?? null" [cartaId]="cartaIdEnEdicion()" (cerrar)="cerrarDrawer()" />
+}
