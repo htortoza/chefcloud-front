@@ -53,6 +53,9 @@ export class ProductoSelectorDialog {
     return this.productosYaEnCarta().has(producto.id);
   }
 
+  /** Excluye del "seleccionar todos" del header los productos ya en la carta — su checkbox de fila está deshabilitado. */
+  readonly filaSeleccionable = (fila: { data: Producto }): boolean => !this.estaYaEnCarta(fila.data);
+
   confirmarSeleccion(): void {
     this.agregar.emit(this.seleccionados().map((p) => p.id));
     this.seleccionados.set([]);

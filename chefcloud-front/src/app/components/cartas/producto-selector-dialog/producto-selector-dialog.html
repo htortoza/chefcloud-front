@@ -23,6 +23,10 @@
         optionValue="id"
         [ngModel]="categoriaSeleccionada()"
         (ngModelChange)="categoriaSeleccionada.set($event)"
+        [filter]="true"
+        filterBy="nombre"
+        filterPlaceholder="Buscar categoría…"
+        [scrollHeight]="'20rem'"
       />
       <span class="selector__contador">{{ productosFiltrados().length }} productos</span>
     </div>
@@ -30,6 +34,7 @@
     <p-table
       [value]="productosFiltrados()"
       [(selection)]="seleccionados"
+      [rowSelectable]="filaSeleccionable"
       dataKey="id"
       [paginator]="true"
       [rows]="10"
@@ -39,7 +44,7 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 3rem"></th>
+          <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
           <th></th>
           <th>Producto</th>
           <th>Categoría</th>
