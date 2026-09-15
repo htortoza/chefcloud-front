@@ -1,11 +1,20 @@
 <div class="sesion-switcher">
-  <span class="sesion-switcher__etiqueta">Rol de prueba</span>
-  <p-select
-    [options]="opcionesRol"
-    optionLabel="label"
-    optionValue="value"
-    [ngModel]="rolActual()"
-    (ngModelChange)="cambiarRol($event)"
-    [fluid]="true"
-  />
+  <button type="button" class="sesion-switcher__disparador" (click)="panelRol.toggle($event)" aria-label="Cambiar rol de prueba">
+    <i class="pi pi-user"></i>
+    <span>{{ etiquetaRolActual() }}</span>
+  </button>
+
+  <p-popover #panelRol appendTo="body">
+    <div class="sesion-switcher__panel">
+      <span class="sesion-switcher__etiqueta">Rol de prueba</span>
+      <p-select
+        [options]="opcionesRol"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="rolActual()"
+        (ngModelChange)="cambiarRol($event)"
+        [fluid]="true"
+      />
+    </div>
+  </p-popover>
 </div>

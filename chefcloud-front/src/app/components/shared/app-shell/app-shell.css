@@ -4,12 +4,12 @@
 }
 
 .shell-nav {
-  flex: 0 0 110px;
+  flex: 0 0 80px;
   max-width: 250px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 12px;
+  gap: 12px;
+  padding: 12px 6px;
   border-right: 1px solid var(--p-content-border-color);
   background: var(--p-surface-0);
   view-transition-name: shell-nav;
@@ -70,9 +70,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
-  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
   border-radius: var(--p-border-radius-md, 8px);
   background: var(--p-surface-50);
   transition:
@@ -120,6 +120,33 @@
 .submodulo-etiqueta-estado {
   font-size: 0.65rem;
   color: var(--p-text-muted-color);
+}
+
+.shell-nav__pie {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shell-nav__cuenta-boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--p-border-radius-md, 6px);
+  background: none;
+  color: var(--p-text-muted-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.shell-nav__cuenta-boton:hover {
+  background: var(--p-surface-50);
+  color: var(--p-text-color);
 }
 
 .shell-contenido {
