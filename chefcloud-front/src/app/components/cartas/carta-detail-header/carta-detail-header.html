@@ -1,7 +1,7 @@
 <div class="carta-detail-header">
   <div class="carta-detail-header__fila">
     <app-editable-text-field class="carta-detail-header__nombre" [valor]="carta().nombre" [requerido]="true" (guardar)="guardarNombre($event)" />
-    <p-button label="Publicar" severity="success" [outlined]="true" (onClick)="publicar()" />
+    <p-button label="Publicar" icon="pi pi-send" (onClick)="publicar()" />
   </div>
 
   <div class="carta-detail-header__fila carta-detail-header__fila--secundaria">
