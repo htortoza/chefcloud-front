@@ -1,0 +1,11 @@
+.productos-tabla {
+  display: block;
+  margin-top: 1rem;
+}
+
+/* p-table arma su propio <tbody> interno (fuera del template que aporta este componente) — la fila en sí
+   sí es nuestra (viene del ng-template), pero el <tbody> que la envuelve no, así que el selector sin
+   ::ng-deep nunca matchea (encapsulación de Angular corta ahí) y el cursor no se aplicaba. */
+.productos-tabla ::ng-deep tbody tr {
+  cursor: pointer;
+}
