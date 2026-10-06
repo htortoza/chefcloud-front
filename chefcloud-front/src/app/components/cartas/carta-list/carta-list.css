@@ -1,11 +1,96 @@
+/* Filtro por estado — texto + contador, mismo lenguaje visual que el resto de la pantalla (escala
+   de grises, sin degradados ni animación). Se probaron tarjetas "insight" con color/degradado acá
+   (ver historial de sesión en el repo) y el usuario las rechazó dos veces — "se ven mal y no
+   encuentro valor real". Volver a lo simple: chips de filtro, nada más. */
+.filtro-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filtro-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 999px;
+  background: var(--p-surface-0);
+  color: var(--p-text-color);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.filtro-chip:hover {
+  background: var(--p-surface-50);
+}
+
+.filtro-chip--activo,
+.filtro-chip--activo:hover {
+  border-color: var(--p-surface-900);
+  background: var(--p-surface-900);
+  color: var(--p-surface-0);
+}
+
+.filtro-chip__contador {
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+}
+
+.filtro-chip--activo .filtro-chip__contador {
+  color: color-mix(in srgb, var(--p-surface-0) 70%, transparent);
+}
+
+.filtro-chip--errores:not(.filtro-chip--activo) {
+  color: var(--p-red-600);
+  border-color: var(--p-red-200);
+}
+
+.filtro-chip--errores:not(.filtro-chip--activo) .filtro-chip__contador {
+  color: var(--p-red-600);
+}
+
+.cartas-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--p-orange-200);
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-orange-50);
+  font-size: 0.85rem;
+  color: var(--p-text-color);
+}
+
+.cartas-filtros {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
 .cartas-buscador {
-  margin-top: 1rem;
   max-width: 20rem;
+}
+
+.cartas-filtros__limpiar {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cartas-filtros__limpiar:hover {
+  color: var(--p-text-color);
 }
 
 .cartas-tabla {
   display: block;
-  margin-top: 1rem;
 }
 
 /* p-table arma su propio <tbody> interno (fuera del template que aporta este componente) — la fila en sí
@@ -13,4 +98,88 @@
    ::ng-deep nunca matchea (encapsulación de Angular corta ahí) y el cursor no se aplicaba. */
 .cartas-tabla ::ng-deep tbody tr {
   cursor: pointer;
+}
+
+.carta-nombre-celda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.carta-nombre {
+  font-weight: 600;
+}
+
+.carta-descripcion {
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carta-meta {
+  color: var(--p-text-muted-color);
+  font-size: 0.8rem;
+}
+
+.carta-canales {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.canal-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.canal-badge--activo {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
+
+/* Isotipo real por canal (pedido explícito — excepción puntual, ver CLAUDE.md) recoloreado al
+   mismo verde/gris del badge vía `fill: currentColor`, nunca el color de marca propio del canal. */
+.canal-badge__logo {
+  height: 0.55rem;
+  width: auto;
+  display: block;
+}
+
+.canal-badge__logo--rappi,
+.canal-badge__logo--pedidosya {
+  height: 0.7rem;
+}
+
+.canal-badge__logo path,
+.canal-badge__logo polygon {
+  fill: currentColor;
+}
+
+.carta-error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--p-red-100);
+  color: var(--p-red-700);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cartas-vacio {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
 }

@@ -1,0 +1,24 @@
+.adicionales-buscador {
+  margin-top: 1rem;
+  max-width: 20rem;
+}
+
+.adicionales-tabla {
+  display: block;
+  margin-top: 1rem;
+}
+
+/* Mismo motivo que en carta-list.css: el <tbody> de p-table no es parte de nuestro template. */
+.adicionales-tabla ::ng-deep tbody tr {
+  cursor: pointer;
+}
+
+.adicional-nombre {
+  font-weight: 600;
+}
+
+.adicionales-vacio {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}

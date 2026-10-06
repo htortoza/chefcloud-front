@@ -1,35 +1,10 @@
+/* El disparador en sí reusa la clase global `.submodulo-item` (mismo look que un ítem del nav
+   y que el botón "Ajustes") — acá solo queda el wrapper y el contenido del popover, que vive
+   fuera del riel (`appendTo="body"`) y mantiene el tema claro por defecto. */
 .sesion-switcher {
   width: 100%;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--p-content-border-color);
   display: flex;
   justify-content: center;
-}
-
-.sesion-switcher__disparador {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 6px 4px;
-  border: none;
-  background: none;
-  border-radius: var(--p-border-radius-md, 6px);
-  color: var(--p-text-color);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.sesion-switcher__disparador:hover {
-  background: var(--p-surface-50);
-}
-
-.sesion-switcher__disparador span {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .sesion-switcher__panel {

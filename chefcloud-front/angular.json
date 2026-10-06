@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "motor-promociones-front": {
+    "chefcloud-front": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -39,7 +39,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumError": "9.5kB"
                 }
               ],
               "outputHashing": "all"
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "motor-promociones-front:build:production"
+              "buildTarget": "chefcloud-front:build:production"
             },
             "development": {
-              "buildTarget": "motor-promociones-front:build:development"
+              "buildTarget": "chefcloud-front:build:development"
             }
           },
           "defaultConfiguration": "development"

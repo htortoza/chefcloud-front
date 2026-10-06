@@ -9,3 +9,71 @@
 .productos-tabla ::ng-deep tbody tr {
   cursor: pointer;
 }
+
+.productos-miniatura {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.productos-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productos-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.productos-nombre {
+  font-weight: 600;
+}
+
+.productos-descripcion {
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+  max-width: 20rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productos-precio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.productos-precio--tachado {
+  color: var(--p-text-muted-color);
+  text-decoration: line-through;
+  font-size: 0.85rem;
+}
+
+.productos-precio-oferta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--p-green-600);
+}
+
+.productos-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 14rem;
+}
+
+.productos-etiquetas-vacio {
+  color: var(--p-text-muted-color);
+  font-size: 0.8rem;
+}

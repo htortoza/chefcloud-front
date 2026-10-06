@@ -2,28 +2,25 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Drawer } from 'primeng/drawer';
+import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
+import { Textarea } from 'primeng/textarea';
 import { InputNumber } from 'primeng/inputnumber';
 import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
-import { Fluid } from 'primeng/fluid';
+import { ConfirmationService, PrimeTemplate } from 'primeng/api';
 import { ProductoService } from '../../../services/producto.service';
 import { CartaService } from '../../../services/carta.service';
+import { AdicionalService } from '../../../services/adicional.service';
 import { SesionService } from '../../../services/sesion.service';
 import { Producto } from '../../../data/catalogo.model';
 import { EstadoCanalProducto } from '../../../data/cartas.model';
 import { puedeEditarMarketing, puedeEditarOperacion } from '../../../data/roles.model';
-
-interface FormularioGrupoModificador {
-  nombre: ReturnType<typeof signal<string>>;
-  minimo: ReturnType<typeof signal<number>>;
-  maximo: ReturnType<typeof signal<number>>;
-}
+import { AdicionalSelectorDialog } from '../../cartas/adicional-selector-dialog/adicional-selector-dialog';
 
 @Component({
   selector: 'app-producto-detail-drawer',
-  imports: [FormsModule, DecimalPipe, Drawer, InputText, InputNumber, Select, Button, Fluid],
+  imports: [FormsModule, DecimalPipe, Dialog, InputText, Textarea, InputNumber, Select, Button, PrimeTemplate, AdicionalSelectorDialog],
   templateUrl: './producto-detail-drawer.html',
   styleUrl: './producto-detail-drawer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,24 +28,34 @@ interface FormularioGrupoModificador {
 export class ProductoDetailDrawer {
   private readonly productoService = inject(ProductoService);
   private readonly cartaService = inject(CartaService);
+  private readonly adicionalService = inject(AdicionalService);
   private readonly sesionService = inject(SesionService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly router = inject(Router);
 
   readonly producto = input<Producto | null>(null);
   /** Presente solo cuando se llega vía "Editar en catálogo" desde una Carta — habilita la sección "Por canal" y "Volver a la carta". */
   readonly cartaId = input<string | null>(null);
   readonly cerrar = output<void>();
+  /** Emite el id del producto recién creado — solo en modo creación, para que quien abrió el drawer (ej. el selector de una sección) pueda usarlo sin tener que volver a buscarlo. */
+  readonly creado = output<string>();
 
   readonly categorias = this.productoService.categorias;
   readonly canales = this.cartaService.canales;
   readonly visible = signal(true);
-  readonly grupos = signal<FormularioGrupoModificador[]>([]);
+  readonly mostrandoSelectorAdicionales = signal(false);
 
   /** Marketing es dueño del contenido base (nombre/descripción/foto) y por canal — Módulo 0 sección 4, Módulo 1 sección 3. */
   readonly puedeEditar = computed(() => puedeEditarMarketing(this.sesionService.rol()));
-  /** Precio base también es de Operaciones (Módulo 1 sección 4, punto 2) — solo aplica editando un producto existente; crear uno nuevo no está en el alcance de este permiso. */
+  /** Operaciones: precio (base y por canal) y asociación de adicionales — mismo permiso que en Estructura, esta es una segunda superficie sobre los mismos métodos, no un gate nuevo. */
   readonly puedeEditarPrecioBase = computed(() => puedeEditarOperacion(this.sesionService.rol()));
   readonly editandoExistente = computed(() => this.producto() !== null);
+
+  readonly gruposAsociados = computed(() => {
+    const p = this.producto();
+    return p ? this.adicionalService.gruposDeProducto(p.id) : [];
+  });
+  readonly idsAdicionalesAsociados = computed(() => new Set(this.gruposAsociados().map((g) => g.id)));
 
   readonly form = {
     nombre: signal(''),
@@ -72,33 +79,34 @@ export class ProductoDetailDrawer {
       this.form.precioCosto.set(actual?.precioCosto ?? 0);
       this.form.sku.set(actual?.sku ?? '');
       this.form.categoriaId.set(actual?.categoriaId ?? this.categorias()[0]?.id ?? '');
-      this.grupos.set(
-        (actual?.gruposModificadores ?? []).map((g) => ({
-          nombre: signal(g.nombre),
-          minimo: signal(g.minimo),
-          maximo: signal(g.maximo),
-        })),
-      );
     });
   }
 
-  agregarGrupoModificador(): void {
-    this.grupos.update((lista) => [...lista, { nombre: signal(''), minimo: signal(0), maximo: signal(1) }]);
+  abrirSelectorAdicionales(): void {
+    if (!this.puedeEditarPrecioBase()) return;
+    this.mostrandoSelectorAdicionales.set(true);
   }
 
-  eliminarGrupoModificador(indice: number): void {
-    this.grupos.update((lista) => lista.filter((_, i) => i !== indice));
+  cerrarSelectorAdicionales(): void {
+    this.mostrandoSelectorAdicionales.set(false);
+  }
+
+  agregarAdicionales(grupoIds: string[]): void {
+    const producto = this.producto();
+    if (!producto) return;
+    grupoIds.forEach((grupoId) => this.adicionalService.asociarProducto(grupoId, producto.id));
+    this.cerrarSelectorAdicionales();
+  }
+
+  quitarAdicional(grupoId: string): void {
+    if (!this.puedeEditarPrecioBase()) return;
+    const producto = this.producto();
+    if (!producto) return;
+    this.adicionalService.desasociarProducto(grupoId, producto.id);
   }
 
   guardar(): void {
     const actual = this.producto();
-    const gruposModificadores = this.grupos().map((g) => ({
-      id: crypto.randomUUID(),
-      nombre: g.nombre(),
-      minimo: g.minimo(),
-      maximo: g.maximo(),
-      opciones: [],
-    }));
     const valores = {
       nombre: this.form.nombre(),
       descripcion: this.form.descripcion(),
@@ -108,16 +116,50 @@ export class ProductoDetailDrawer {
       precioCosto: this.form.precioCosto(),
       sku: this.form.sku(),
       categoriaId: this.form.categoriaId(),
-      gruposModificadores,
     };
 
-    if (actual) {
-      this.productoService.actualizar(actual.id, valores);
-    } else {
-      this.productoService.crear({ ...valores, etiquetas: [] });
+    if (!actual) {
+      const nuevoId = this.productoService.crear({ ...valores, etiquetas: [] });
+      this.creado.emit(nuevoId);
+      this.cerrarDrawer();
+      return;
     }
 
-    this.cerrarDrawer();
+    const cambioNombre = valores.nombre !== actual.nombre;
+    const cambioDescripcion = valores.descripcion !== actual.descripcion;
+    const cambioPrecio = valores.precioVenta !== actual.precioVenta;
+    const overridesAfectados =
+      cambioNombre || cambioDescripcion || cambioPrecio
+        ? this.cartaService
+            .estadosCanalDeProducto(actual.id)
+            .filter((e) => (cambioNombre && e.nombre !== undefined) || (cambioDescripcion && e.descripcion !== undefined) || (cambioPrecio && e.precio !== undefined))
+        : [];
+
+    this.productoService.actualizar(actual.id, valores);
+
+    if (overridesAfectados.length === 0) {
+      this.cerrarDrawer();
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Actualizar también los canales',
+      message: `Este producto tiene ${overridesAfectados.length} override${overridesAfectados.length === 1 ? '' : 's'} de nombre, descripción o precio en canales de distintas cartas. ¿Los actualizamos también a los nuevos valores base, o los dejamos como están?`,
+      icon: 'pi pi-question-circle',
+      acceptLabel: 'Actualizar también',
+      rejectLabel: 'Dejar como están',
+      acceptButtonProps: { severity: 'warn' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => {
+        overridesAfectados.forEach((o) => {
+          if (cambioNombre && o.nombre !== undefined) this.cartaService.setNombreCanal(o.cartaId, o.canalId, actual.id, undefined);
+          if (cambioDescripcion && o.descripcion !== undefined) this.cartaService.setDescripcionCanal(o.cartaId, o.canalId, actual.id, undefined);
+          if (cambioPrecio && o.precio !== undefined) this.cartaService.setPrecioCanal(o.cartaId, o.canalId, actual.id, undefined);
+        });
+        this.cerrarDrawer();
+      },
+      reject: () => this.cerrarDrawer(),
+    });
   }
 
   cerrarDrawer(): void {
@@ -142,6 +184,10 @@ export class ProductoDetailDrawer {
 
   precioCanalMostrado(canalId: string): number {
     return this.estadoCanal(canalId)?.precio ?? this.producto()?.precioVenta ?? 0;
+  }
+
+  tieneOverridePrecioCanal(canalId: string): boolean {
+    return this.estadoCanal(canalId)?.precio !== undefined;
   }
 
   estadoCanalMostrado(canalId: string): EstadoCanalProducto {
@@ -181,6 +227,14 @@ export class ProductoDetailDrawer {
     this.cartaService.setDescripcionCanal(carta, canalId, producto.id, limpio === '' || limpio === producto.descripcion ? undefined : limpio);
   }
 
+  actualizarPrecioCanal(canalId: string, valor: number): void {
+    if (!this.puedeEditarPrecioBase()) return;
+    const carta = this.cartaId();
+    const producto = this.producto();
+    if (!carta || !producto) return;
+    this.cartaService.setPrecioCanal(carta, canalId, producto.id, valor === producto.precioVenta ? undefined : valor);
+  }
+
   usarNombreBaseCanal(canalId: string): void {
     if (!this.puedeEditar()) return;
     const carta = this.cartaId();
@@ -195,6 +249,14 @@ export class ProductoDetailDrawer {
     const producto = this.producto();
     if (!carta || !producto) return;
     this.cartaService.setDescripcionCanal(carta, canalId, producto.id, undefined);
+  }
+
+  usarPrecioBaseCanal(canalId: string): void {
+    if (!this.puedeEditarPrecioBase()) return;
+    const carta = this.cartaId();
+    const producto = this.producto();
+    if (!carta || !producto) return;
+    this.cartaService.setPrecioCanal(carta, canalId, producto.id, undefined);
   }
 
   volverALaCarta(): void {

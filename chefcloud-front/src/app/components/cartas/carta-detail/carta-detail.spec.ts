@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ConfirmationService } from 'primeng/api';
 import { CartaDetail } from './carta-detail';
 import { CartaService } from '../../../services/carta.service';
 
@@ -17,7 +18,7 @@ describe('CartaDetail', () => {
   let cartaId: string;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [CartaDetail] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [CartaDetail], providers: [ConfirmationService] }).compileComponents();
     cartaService = TestBed.inject(CartaService);
     cartaId = cartaService.crear('Carta de prueba');
     fixture = TestBed.createComponent(CartaDetail);

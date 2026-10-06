@@ -1,7 +1,7 @@
 <div class="sesion-switcher">
-  <button type="button" class="sesion-switcher__disparador" (click)="panelRol.toggle($event)" aria-label="Cambiar rol de prueba">
-    <i class="pi pi-user"></i>
-    <span>{{ etiquetaRolActual() }}</span>
+  <button type="button" class="submodulo-item sesion-switcher__disparador" (click)="panelRol.toggle($event)" aria-label="Cambiar rol de prueba">
+    <span class="submodulo-item__icono"><i class="pi pi-user"></i></span>
+    <span class="submodulo-item__etiqueta">{{ etiquetaRolActual() }}</span>
   </button>
 
   <p-popover #panelRol appendTo="body">

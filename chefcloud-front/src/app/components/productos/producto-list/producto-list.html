@@ -5,10 +5,12 @@
 <p-table [value]="filas()" dataKey="id" class="productos-tabla">
   <ng-template pTemplate="header">
     <tr>
-      <th>Nombre</th>
+      <th></th>
+      <th>Producto</th>
       <th>SKU</th>
-      <th>Precio base</th>
+      <th>Precio</th>
       <th>Categoría</th>
+      <th>Etiquetas</th>
       <th># Cartas</th>
       <th>Estado</th>
       <th></th>
@@ -16,10 +18,40 @@
   </ng-template>
   <ng-template pTemplate="body" let-fila>
     <tr (click)="abrirEdicion(fila)">
-      <td>{{ fila.nombre }}</td>
+      <td>
+        <div class="productos-miniatura">
+          @if (fila.foto) {
+            <img [src]="fila.foto" alt="" />
+          } @else {
+            <i class="pi pi-image" aria-hidden="true"></i>
+          }
+        </div>
+      </td>
+      <td>
+        <div class="productos-info">
+          <span class="productos-nombre">{{ fila.nombre }}</span>
+          <span class="productos-descripcion">{{ fila.descripcion }}</span>
+        </div>
+      </td>
       <td>{{ fila.sku }}</td>
-      <td>{{ fila.precioVenta | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</td>
+      <td>
+        <div class="productos-precio">
+          <span [class.productos-precio--tachado]="fila.precioOferta">{{ fila.precioVenta | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</span>
+          @if (fila.precioOferta) {
+            <span class="productos-precio-oferta">Oferta: {{ fila.precioOferta | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</span>
+          }
+        </div>
+      </td>
       <td>{{ fila.categoriaNombre }}</td>
+      <td>
+        <div class="productos-etiquetas">
+          @for (etiqueta of fila.etiquetas; track etiqueta) {
+            <p-tag severity="secondary" [value]="etiqueta" />
+          } @empty {
+            <span class="productos-etiquetas-vacio">—</span>
+          }
+        </div>
+      </td>
       <td>{{ fila.cartasQueLoUsan }}</td>
       <td>
         <p-tag

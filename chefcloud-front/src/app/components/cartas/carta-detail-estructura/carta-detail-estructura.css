@@ -10,49 +10,44 @@
   border: 0;
 }
 
+/* El host llena el alto completo que le da el tabpanel (`carta-detail.css`, flex chain desde la
+   caja de la carta) — el nav de secciones necesita ese alto real para poder ocupar "de punta a
+   punta" en vez de solo el alto de su contenido. */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .estructura {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  height: 100%;
+  min-height: 0;
 }
 
-.estado-global {
+.buscador-productos {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  padding: 0.75rem 1rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-border-radius-md);
-  background: var(--p-surface-50);
-}
-
-.estado-global__bloque {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 5rem;
-}
-
-.estado-global__etiqueta {
-  font-size: 0.7rem;
+  background: var(--p-surface-0);
   color: var(--p-text-muted-color);
 }
 
-.estado-global__valor {
-  font-size: 0.8rem;
-  font-weight: 600;
+.buscador-productos input {
+  flex: 1;
+  border: none;
+  padding: 0.5rem 0;
+  background: transparent;
 }
 
-.estado-global__valor--activo {
-  color: var(--p-green-600);
-}
-
-.estado-global__valor--pausado {
-  color: var(--p-text-muted-color);
-}
-
-.estado-global__valor--error {
-  color: var(--p-red-600);
+.buscador-productos input:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 .barra-masiva {
@@ -60,33 +55,49 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--p-primary-color);
+  border: 1px solid var(--p-surface-900);
   border-radius: var(--p-border-radius-md);
   background: var(--p-surface-50);
   font-size: 0.875rem;
+  font-weight: 600;
 }
 
+/* Sticky: selección + buscador + canales ahora es una sola fila fija arriba del panel al
+   scrollear la lista (pedido explícito) — por eso necesita fondo opaco (si no, las filas de
+   productos se transparentan a través al pasar por debajo) y z-index por encima de ellas. */
 .tabla-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 0.5rem;
+  padding: 0.5rem;
+  background: var(--p-surface-0);
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }
 
-.tabla-header__etiqueta {
-  flex: 1;
-}
-
-.tabla-header__canales {
+.tabla-header__seleccion {
+  flex: 0 0 auto;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
-.tabla-header__canal {
-  width: 6rem;
-  text-align: center;
+.tabla-header__buscador {
+  flex: 1 1 auto;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+/* Reemplaza los logos de canal que vivían acá (quedaron huérfanos al sacar las pastillas
+   "Base" por producto — ya no había qué encabezar). Selector "Tienda": compartida por defecto
+   (placeholder), o la tienda exclusiva si esta carta es una copia (ver `tiendaActual`). */
+.tabla-header__tienda {
+  flex: 0 0 auto;
+  width: 10rem;
 }
 
 .estructura__vacio {
@@ -131,24 +142,22 @@
   width: 12rem;
 }
 
-.seccion__contador {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
 .seccion__franja {
   width: 9rem;
 }
 
-.seccion__franja-horas {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
-.seccion__sin-productos {
-  padding: 0.75rem;
+.seccion__vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
   color: var(--p-text-muted-color);
   font-size: 0.85rem;
+}
+
+.seccion__vacia i {
+  font-size: 1.5rem;
 }
 
 .reorden {
@@ -182,10 +191,6 @@
   cursor: default;
 }
 
-.reorden__flecha:hover:not(:disabled) {
-  background: var(--p-surface-50);
-}
-
 .fila-producto {
   border-top: 1px solid var(--p-content-border-color);
 }
@@ -195,14 +200,34 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
+  cursor: pointer;
 }
 
 .fila-producto__chevron {
-  background: none;
-  border: none;
-  cursor: pointer;
   color: var(--p-text-muted-color);
-  padding: 0.25rem;
+  font-size: 0.8rem;
+  flex: 0 0 auto;
+}
+
+/* Placeholder cuando el producto no tiene foto real todavía — ver CLAUDE.md. */
+.fila-producto__foto {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.fila-producto__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .fila-producto__info {
@@ -216,45 +241,10 @@
   font-weight: 500;
 }
 
-.fila-producto__precio-base {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
-.fila-producto__canales {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pastilla {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: 6rem;
-  justify-content: center;
-  border-radius: 999px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid transparent;
-  background: none;
-  cursor: pointer;
-}
-
-.pastilla[data-estado='activo'] {
-  background: var(--p-green-100);
-  color: var(--p-green-700);
-}
-
-.pastilla[data-estado='pausado'] {
-  background: var(--p-surface-100);
-  color: var(--p-text-muted-color);
-  border-color: var(--p-content-border-color);
-}
-
-.pastilla[data-estado='error'] {
-  background: var(--p-red-100);
-  color: var(--p-red-700);
+.fila-producto__descripcion {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fila-producto__detalle {
@@ -265,167 +255,341 @@
   gap: 0.5rem;
 }
 
-.fila-producto__quitar {
-  align-self: flex-start;
+/* Base compartida de "link de acción" chico sin borde — reusado por varios botones de Estructura y Adicionales. */
+.buscador-productos__limpiar,
+.fila-producto__quitar,
+.adicionales-asignados__agregar,
+.adicional-chip__quitar {
   background: none;
   border: none;
-  color: var(--p-red-600);
-  font-size: 0.75rem;
   cursor: pointer;
   padding: 0;
+}
+
+.buscador-productos__limpiar {
+  display: flex;
+  align-items: center;
+  color: var(--p-text-muted-color);
+}
+
+.fila-producto__quitar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  color: var(--p-text-muted-color);
+}
+
+.fila-producto__quitar:hover {
+  color: var(--p-red-600);
+  background: var(--p-red-50);
+}
+
+/* Pie del panel desplegable del selector de franja — acción de catálogo de Marca, no una opción
+   más de la lista, por eso vive en el footer del overlay en vez de ser un item seleccionable. */
+.seccion__franja-editar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-top: 1px solid var(--p-content-border-color);
+  background: none;
+  color: var(--p-text-muted-color);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.seccion__franja-editar:hover {
+  background: var(--p-surface-50);
+  color: var(--p-text-color);
 }
 
 .canales-detalle {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  row-gap: 0.75rem;
 }
 
-.canal-tarjeta {
-  flex: 1;
-  min-width: 12rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.canal-tarjeta__nombre {
+.seccion__contador,
+.seccion__franja-horas,
+.fila-producto__precio-base,
+.fila-producto__descripcion {
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }
 
-.canal-tarjeta__precio {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-}
-
-.canal-tarjeta__reset {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: var(--p-primary-color);
-  font-size: 0.75rem;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.canal-tarjeta__base {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
-.canal-tarjeta__simular {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: var(--p-text-muted-color);
-  font-size: 0.7rem;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline dotted;
-}
-
-.canal-tarjeta__candado {
-  color: var(--p-text-muted-color);
-  font-size: 0.8rem;
-}
-
-.canal-tarjeta__editar-catalogo {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: var(--p-primary-color);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  margin-top: 0.25rem;
-}
-
-.diagnostico {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border: 1px solid var(--p-red-200);
-  border-radius: var(--p-border-radius-md);
-  background: var(--p-red-50);
-  font-size: 0.75rem;
-  color: var(--p-red-700);
-}
-
-.diagnostico__meta {
-  color: var(--p-text-muted-color);
+.adicional-chip a,
+.adicionales-asignados__agregar {
+  color: var(--p-surface-900);
+  text-decoration: underline;
+  font-weight: 700;
 }
 
 .estructura__layout {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
+/* Panel separado del contenido (fondo + borde propios, alto 100% del layout — llega arriba y
+   abajo sin que el "Estado global"/buscador lo empujen) en vez de una lista sticky que solo se
+   fijaba después de que todo lo de arriba ya había scrolleado. Nunca scrollea junto con la
+   página — el único overflow de esta vista vive en `.estructura__contenido`. */
 .secciones-nav {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  width: 5.625rem;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
+  width: 10.5rem;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.5rem;
+  background: var(--p-surface-50);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 8px);
+  overflow-y: auto;
 }
 
 .secciones-nav__item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.4rem;
   width: 100%;
-  padding: 0.4rem 0.3rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-border-radius-md);
   background: var(--p-surface-0);
   color: var(--p-text-color);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
 }
 
-.secciones-nav__item:hover {
+.secciones-nav__item:hover,
+.reorden__flecha:hover:not(:disabled) {
   background: var(--p-surface-50);
 }
 
+/* Activo se marca con contraste (fondo + borde oscuro) y negrita, no con el color de marca — en
+   línea con WCAG 1.4.1 (el color nunca es la única señal de estado). Gris oscuro en vez de
+   rosa/naranjo para que la pastilla seleccionada no compita visualmente con las acciones
+   primarias (Publicar, Nueva carta), que sí mantienen el degradado de marca. */
+/* El selector combinado con `:hover` es a propósito (no solo `.activo`): el hover genérico de
+   arriba tiene casi la misma especificidad y, sin este empate explícito, pintaría de claro un
+   ítem ya oscuro/activo al pasar el mouse, dejando el texto blanco ilegible — mismo error que ya
+   corregimos en la sidebar. Nunca separar este hover del estado base. */
+.secciones-nav__item--activo,
+.secciones-nav__item--activo:hover {
+  border-color: var(--p-surface-900);
+  background: var(--p-surface-900);
+  color: var(--p-surface-0);
+}
+
 .secciones-nav__item--activo {
-  border-color: var(--p-primary-color);
-  background: var(--p-surface-100);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .secciones-nav__nombre {
-  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .secciones-nav__error {
+  flex: 0 0 auto;
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
   background: var(--p-red-500);
 }
 
-.secciones-nav__nueva {
-  border-style: dashed;
-  color: var(--p-primary-color);
+.secciones-nav__contador {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
 }
 
+.secciones-nav__item--activo .secciones-nav__contador {
+  color: color-mix(in srgb, var(--p-surface-0) 70%, transparent);
+}
+
+/* A propósito NO comparte `.secciones-nav__item` — es una acción, no un ítem de lista. Outline
+   (no relleno sólido): un fondo oscuro se confunde con el estado "activo" de la lista — misma
+   superficie, mismo color — y ley básica de UI es que una selección y una acción nunca se vean
+   iguales. Botón outlined, borde grueso, se lee como acción sin pisar ese significado. */
+.secciones-nav__nueva {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.5rem;
+  border: 1.5px solid var(--p-surface-900);
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-surface-0);
+  color: var(--p-surface-900);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secciones-nav__nueva:hover {
+  background: var(--p-surface-100);
+}
+
+
+/* Sin padding-top: `.tabla-header` (sticky, `top: 0`) ancla contra el borde de arriba de este
+   padding box — si el box tuviera padding-top, la fila sticky quedaría "pegada" 0.5rem más abajo
+   del tope real, dejando un hueco por el que el contenido que scrollea se asoma por ENCIMA del
+   sticky en vez de quedar tapado por él. El espacio entre el sticky y la primera sección ya lo da
+   el `gap` de este mismo flex-column. */
 .estructura__contenido {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 0 1.5rem 1.5rem;
+  overflow-y: auto;
 }
+
+/* Sin esto, un flex column con alto limitado ENCOGE a sus hijos (flex-shrink:1 por defecto) en
+   vez de simplemente overflowear y dejar que `overflow-y:auto` de arriba scrollee — y como
+   `.seccion` ya tenía `overflow:hidden` (para las esquinas redondeadas), el contenido que no
+   entraba quedaba recortado e invisible en vez de accesible con scroll. */
+.estructura__contenido > * {
+  flex-shrink: 0;
+}
+
+.adicionales-asignados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.adicionales-asignados__titulo {
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+  text-transform: uppercase;
+}
+
+.adicionales-asignados__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.adicionales-asignados__vacio {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}
+
+.adicional-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 16rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-surface-0);
+  font-size: 0.8rem;
+}
+
+.adicional-chip__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.adicional-chip__meta {
+  flex: 1;
+  color: var(--p-text-muted-color);
+  font-size: 0.72rem;
+}
+
+.adicional-chip__opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.adicional-chip__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.2rem;
+}
+
+.adicional-chip__titulo-grupo {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.adicional-chip__opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.adicional-chip__opcion:last-of-type {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Verde = activo, gris = pausado (no el degradado de marca) — y más chico que el tamaño por
+   defecto de PrimeNG. Son variables CSS heredadas, no selectores propios del componente interno
+   de PrimeNG, así que no hace falta `::ng-deep` para que el track/handle las recojan. */
+.adicional-chip__toggle {
+  --p-toggleswitch-width: 1.75rem;
+  --p-toggleswitch-height: 1rem;
+  --p-toggleswitch-handle-size: 0.7rem;
+  --p-toggleswitch-checked-background: var(--p-green-500);
+  --p-toggleswitch-checked-hover-background: var(--p-green-600);
+  flex: 0 0 auto;
+}
+
+.adicionales-asignados__agregar {
+  align-self: flex-start;
+  font-size: 0.8rem;
+}
+
+.adicionales-asignados__agregar:disabled {
+  color: var(--p-text-muted-color);
+  cursor: default;
+}
+
+.adicional-chip__quitar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  color: var(--p-text-muted-color);
+  font-size: 0.7rem;
+}
+
+.adicional-chip__quitar:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+

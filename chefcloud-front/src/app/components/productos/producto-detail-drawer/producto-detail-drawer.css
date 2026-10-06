@@ -1,0 +1,256 @@
+/* Modal grande en vez de drawer angosto (pedido explícito del usuario — "prefería un modal, más
+   que una pantalla completa") — mismo patrón de tamaño que `ProductoSelectorDialog`, no un
+   invento nuevo. El layout de 2 columnas sigue usando el ancho ganado respecto al drawer
+   original: identidad del producto a la izquierda, precios/adicionales/por-canal a la derecha. */
+.producto-form__volver {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.producto-form__volver:hover {
+  color: var(--p-text-color);
+}
+
+.producto-form__columnas {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Panel de identidad con fondo gris propio (ley de región común — Gestalt): separa "qué es este
+   producto" (foto/nombre/descripción) del resto del formulario sin agregar otra línea de borde
+   más — el contraste de fondo ya alcanza para que el ojo agrupe estos campos como una unidad. */
+.producto-form__identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.1rem;
+  background: var(--p-surface-50);
+  border-radius: var(--p-border-radius-md);
+}
+
+.producto-form__principal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Separador entre secciones por línea + espacio, no por caja — con 2+ secciones encerradas cada
+   una en su propio borde (como estaba antes) el ojo no distingue "sección" de "tarjeta de dato",
+   todo pesa igual. Una sola línea horizontal entre bloques alcanza (ley de proximidad: lo que está
+   separado por aire + regla se lee como grupo distinto, sin necesitar una caja completa). */
+.producto-form__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+.producto-form__seccion:first-child {
+  padding-top: 0;
+}
+
+.producto-form__seccion + .producto-form__seccion {
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.producto-form__seccion-titulo {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted-color);
+}
+
+.producto-form__precios {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.producto-form__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.producto-form__foto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.producto-form__foto-preview {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--p-border-radius-md);
+  object-fit: cover;
+  border: 1px solid var(--p-content-border-color);
+}
+
+.producto-form__foto-placeholder {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--p-border-radius-md);
+  border: 1px solid var(--p-content-border-color);
+  background: var(--p-surface-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--p-text-muted-color);
+  flex-shrink: 0;
+}
+
+.producto-form__precio-bloqueado {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+}
+
+/* Adicionales asociados a este producto — segunda superficie sobre `AdicionalService` (la
+   principal sigue siendo la fila expandida de Estructura); acá es solo asociar/quitar, el
+   detalle de límites/opciones se edita en `/adicionales/:id`. */
+.producto-form__adicionales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.adicional-chip-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.adicional-chip-mini button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.adicional-chip-mini button:hover {
+  color: var(--p-text-color);
+}
+
+.adicional-chip-mini button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.producto-form__vacio {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}
+
+.producto-form__canales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+/* Mismo criterio que el panel de identidad: fondo gris agrupa la tarjeta como unidad, sin sumar
+   otro borde — con 4 tarjetas de canal lado a lado, bordes por todos lados se leían como una
+   grilla densa de recuadros; el fondo solo (sin borde) es más liviano y sigue marcando el límite. */
+.canal-marketing-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background: var(--p-surface-50);
+  border-radius: var(--p-border-radius-md);
+}
+
+.canal-marketing-tarjeta__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.canal-marketing-tarjeta__nombre {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Misma pastilla visual que Estructura de carta — cada componente PrimeNG/CSS encapsulado, se repite aquí a propósito. */
+.pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: none;
+}
+
+.pastilla[data-estado='activo'] {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
+
+.pastilla[data-estado='pausado'] {
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  border-color: var(--p-content-border-color);
+}
+
+.pastilla[data-estado='error'] {
+  background: var(--p-red-100);
+  color: var(--p-red-700);
+}
+
+/* Gris + subrayado, nunca el color de marca — es una acción secundaria dentro de una pantalla
+   densa de datos, no un CTA primario (ver "Accent Color Discipline" en CLAUDE.md). */
+.canal-tarjeta__reset {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--p-text-muted-color);
+  text-decoration: underline;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.canal-tarjeta__reset:hover:not(:disabled) {
+  color: var(--p-text-color);
+}
+
+.canal-tarjeta__reset:disabled {
+  color: var(--p-text-muted-color);
+  cursor: default;
+}
+
+@media (max-width: 50rem) {
+  .producto-form__columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .producto-form__precios {
+    grid-template-columns: 1fr;
+  }
+}

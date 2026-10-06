@@ -1,0 +1,110 @@
+.franjas-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Tarjeta con fondo gris en vez de fila con línea divisoria — mismo criterio de región común
+   (Gestalt) ya usado en el modal de producto: agrupa nombre+toggle+horas como una unidad sin
+   sumar otro borde, y evita la sensación de "lista de filas angostas" que se sentía recargada. */
+.franjas-manager__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--p-surface-50);
+  border-radius: var(--p-border-radius-md);
+}
+
+.franjas-manager__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.franjas-manager__nombre-fijo {
+  font-weight: 600;
+}
+
+.franjas-manager__nombre {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.franjas-manager__acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.franjas-manager__eliminar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--p-text-muted-color);
+}
+
+.franjas-manager__eliminar:hover {
+  color: var(--p-red-600);
+  background: var(--p-red-100);
+}
+
+.franjas-manager__todo-dia {
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+}
+
+.franjas-manager__horas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Normaliza el input nativo `type="time"` (cada navegador lo dibuja distinto, por defecto sin
+   borde/radio consistente con el resto del formulario) al mismo lenguaje visual que los demás
+   inputs de la app — nunca puede quedar con la apariencia nativa del sistema operativo. */
+.franjas-manager__horas input[type='time'] {
+  width: 7.5rem;
+  border-radius: var(--p-border-radius-md);
+  border: 1px solid var(--p-content-border-color);
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--p-text-color);
+  background: var(--p-surface-0);
+}
+
+.franjas-manager__horas-separador {
+  color: var(--p-text-muted-color);
+  font-size: 0.85rem;
+}
+
+/* Mismo patrón que "+ Sección" (outline, nunca relleno sólido) — es una acción, no una
+   selección ni un CTA de pantalla. */
+.franjas-manager__nueva {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--p-surface-900);
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-surface-0);
+  color: var(--p-surface-900);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.franjas-manager__nueva:hover {
+  background: var(--p-surface-100);
+}

@@ -1,0 +1,97 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [maximizable]="true"
+  appendTo="body"
+  [header]="titulo()"
+  [style]="{ width: '70vw', maxWidth: '56rem', height: '75vh' }"
+  [contentStyle]="{ height: '100%', display: 'flex', flexDirection: 'column' }"
+  (onHide)="cerrar.emit()"
+>
+  <div class="selector">
+    @if (catalogoVacio()) {
+      <div class="selector__vacio-catalogo">
+        <i class="pi pi-tags" aria-hidden="true"></i>
+        <span class="selector__vacio-catalogo-titulo">Todavía no creaste grupos de adicionales</span>
+        <span class="selector__vacio-catalogo-texto">Creá uno para poder asociarlo a este producto.</span>
+        <a routerLink="/adicionales">Ir a Adicionales →</a>
+      </div>
+    } @else {
+    <div class="selector__filtros">
+      <input
+        pInputText
+        type="text"
+        placeholder="Buscar por nombre o título…"
+        class="selector__busqueda"
+        [ngModel]="textoBusqueda()"
+        (ngModelChange)="textoBusqueda.set($event)"
+      />
+      <span class="selector__contador">{{ gruposFiltrados().length }} grupos</span>
+    </div>
+
+    <p-table
+      [value]="gruposFiltrados()"
+      [(selection)]="seleccionados"
+      [rowSelectable]="filaSeleccionable"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      class="selector__tabla"
+      scrollHeight="flex"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+          <th>Grupo</th>
+          <th>Contiene</th>
+          <th>Límites</th>
+          <th>Estado</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-grupo>
+        <tr [class.selector__fila--deshabilitada]="estaYaAsociado(grupo)">
+          <td>
+            <p-tableCheckbox [value]="grupo" [disabled]="estaYaAsociado(grupo)" />
+          </td>
+          <td>
+            <div class="selector__info">
+              <span class="selector__nombre">{{ grupo.nombre }}</span>
+              @if (grupo.titulo) {
+                <span class="selector__descripcion">{{ grupo.titulo }}</span>
+              }
+            </div>
+          </td>
+          <td>
+            <span class="selector__opciones" [title]="nombresOpciones(grupo)">{{ nombresOpciones(grupo) }}</span>
+          </td>
+          <td>min {{ grupo.limiteMinimo }} / max {{ grupo.limiteMaximo }}</td>
+          <td>
+            <div class="selector__etiquetas">
+              <p-tag [severity]="grupo.activo ? 'success' : 'secondary'" [value]="grupo.activo ? 'Activo' : 'Pausado'" />
+              @if (estaYaAsociado(grupo)) {
+                <p-tag severity="secondary" value="Ya asociado" />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="selector__vacio">Ningún grupo coincide con el filtro.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <span class="selector__seleccion-contador">{{ seleccionados().length }} seleccionados</span>
+    <p-button label="Cancelar" [text]="true" (onClick)="cerrarDialog()" />
+    <p-button
+      [label]="'Añadir' + (seleccionados().length > 0 ? ' (' + seleccionados().length + ')' : '')"
+      [disabled]="seleccionados().length === 0"
+      (onClick)="confirmarSeleccion()"
+    />
+  </ng-template>
+</p-dialog>

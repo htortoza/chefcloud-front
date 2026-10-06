@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ConfirmationService } from 'primeng/api';
 import { ProductoSelectorDialog } from './producto-selector-dialog';
 import { ProductoService } from '../../../services/producto.service';
 
@@ -8,7 +9,7 @@ describe('ProductoSelectorDialog', () => {
   let productoService: ProductoService;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ProductoSelectorDialog] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [ProductoSelectorDialog], providers: [ConfirmationService] }).compileComponents();
     productoService = TestBed.inject(ProductoService);
     fixture = TestBed.createComponent(ProductoSelectorDialog);
     fixture.componentRef.setInput('productosYaEnCarta', new Set<string>());
@@ -62,5 +63,40 @@ describe('ProductoSelectorDialog', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.estaYaEnCarta(producto)).toBe(true);
+  });
+
+  it('catalogoVacio es false cuando hay productos activos', () => {
+    expect(fixture.componentInstance.catalogoVacio()).toBe(false);
+  });
+
+  it('catalogoVacio es true cuando no hay ningún producto activo en la marca', () => {
+    productoService.productos().forEach((p) => productoService.archivar(p.id));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.catalogoVacio()).toBe(true);
+  });
+
+  it('abrirCrearProducto/cerrarCrearProducto alternan crearAbierto', () => {
+    expect(fixture.componentInstance.crearAbierto()).toBe(false);
+
+    fixture.componentInstance.abrirCrearProducto();
+    expect(fixture.componentInstance.crearAbierto()).toBe(true);
+
+    fixture.componentInstance.cerrarCrearProducto();
+    expect(fixture.componentInstance.crearAbierto()).toBe(false);
+  });
+
+  it('productoCreado agrega el nuevo id junto con lo ya seleccionado, limpia la selección y cierra la creación', () => {
+    const [productoA] = productoService.productos();
+    let emitido: string[] | undefined;
+    fixture.componentInstance.agregar.subscribe((ids: string[]) => (emitido = ids));
+    fixture.componentInstance.seleccionados.set([productoA]);
+    fixture.componentInstance.abrirCrearProducto();
+
+    fixture.componentInstance.productoCreado('producto-nuevo-id');
+
+    expect(emitido).toEqual([productoA.id, 'producto-nuevo-id']);
+    expect(fixture.componentInstance.seleccionados()).toEqual([]);
+    expect(fixture.componentInstance.crearAbierto()).toBe(false);
   });
 });

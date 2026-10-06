@@ -1,6 +1,4 @@
 export type EstadoCarta = 'borrador' | 'publicada';
-export type TipoVigenciaCarta = 'regular' | 'fecha-especial';
-export type FranjaEspecial = 'todo-dia' | 'almuerzo' | 'cena' | 'brunch' | 'desayuno';
 
 export const FRANJA_GENERAL_ID = 'general';
 
@@ -33,13 +31,17 @@ export interface Carta {
   nombre: string;
   descripcionInterna: string;
   estado: EstadoCarta;
-  tipoVigencia: TipoVigenciaCarta;
-  rangoFechas?: { desde: string; hasta: string };
-  franjaEspecial?: FranjaEspecial;
   /** Nivel más alto de la herencia horaria Carta→Sección→Producto (Módulo 0, sección 3). FRANJA_GENERAL_ID = vigente todo el día. */
   franjaId: string;
   ultimaPublicacionEn?: string;
   snapshotUltimaPublicacion?: string;
+  /** Si está seteada, esta carta es una copia exclusiva de otra para UNA sola tienda (nace de
+   *  "duplicar para otra tienda con cambios") — nunca se asigna a una segunda tienda. Ausente en
+   *  la carta compartida (la que sí puede estar asignada a todas las tiendas que haga falta). */
+  tiendaExclusivaId?: string;
+  /** Apunta a la carta de la que se duplicó esta — ausente en la carta compartida misma. Junto a
+   *  `tiendaExclusivaId` arma la "familia" de una carta (compartida + sus copias por tienda). */
+  cartaOrigenId?: string;
   secciones: Seccion[];
 }
 

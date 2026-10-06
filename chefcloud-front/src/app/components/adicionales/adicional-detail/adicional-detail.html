@@ -1,0 +1,211 @@
+@if (grupo(); as g) {
+  <div class="adicional-detail">
+    <div class="adicional-detail__header">
+      <div class="adicional-detail__fila">
+        <app-editable-text-field class="adicional-detail__nombre" [valor]="g.nombre" [requerido]="true" (guardar)="guardarNombre($event)" />
+        <button type="button" class="pastilla" [attr.data-estado]="g.activo ? 'activo' : 'pausado'" (click)="toggleActivo()">
+          <i [class]="g.activo ? 'pi pi-check' : 'pi pi-pause'"></i>
+          <span>{{ g.activo ? 'Activo' : 'Pausado' }}</span>
+        </button>
+      </div>
+      <span class="adicional-detail__historial" title="Próximamente — Auditoría (Módulo 9) no está construida todavía">Ver historial de este grupo →</span>
+    </div>
+
+    <div class="adicional-detail__datos-base">
+      <label class="adicional-detail__campo">
+        <span class="adicional-detail__campo-label">Límite mínimo (grupo)</span>
+        <p-inputNumber [ngModel]="g.limiteMinimo" (ngModelChange)="actualizarLimiteMinimo($event)" />
+      </label>
+      <label class="adicional-detail__campo">
+        <span class="adicional-detail__campo-label">Límite máximo (grupo)</span>
+        <p-inputNumber [ngModel]="g.limiteMaximo" (ngModelChange)="actualizarLimiteMaximo($event)" />
+      </label>
+      <div class="adicional-detail__campo adicional-detail__campo--flex">
+        <span class="adicional-detail__campo-label">Título a mostrar</span>
+        <app-editable-text-field [valor]="g.titulo" (guardar)="guardarTitulo($event)" />
+      </div>
+      <div class="adicional-detail__campo adicional-detail__campo--flex">
+        <span class="adicional-detail__campo-label">Descripción</span>
+        <app-editable-text-field [valor]="g.descripcion" (guardar)="guardarDescripcion($event)" />
+      </div>
+    </div>
+
+    <div class="adicional-detail__opciones">
+      <span class="adicional-detail__opciones-titulo">Opciones del grupo</span>
+      <input
+        pInputText
+        type="text"
+        placeholder="Buscar opción..."
+        class="adicional-detail__buscador"
+        [ngModel]="terminoOpcion()"
+        (ngModelChange)="terminoOpcion.set($event)"
+      />
+
+      @if (g.opciones.length === 0) {
+        <p class="adicional-detail__sin-opciones">Este grupo todavía no tiene opciones.</p>
+      } @else if (opcionesFiltradas().length === 0) {
+        <p class="adicional-detail__sin-opciones">Ninguna opción coincide con "{{ terminoOpcion() }}".</p>
+      }
+
+      @for (opcion of opcionesFiltradas(); track opcion.id) {
+        <div class="fila-opcion">
+          <div class="fila-opcion__principal">
+            <button
+              type="button"
+              class="fila-opcion__chevron"
+              [attr.aria-label]="estaExpandido(opcion.id) ? 'Colapsar detalle de la opción' : 'Expandir detalle de la opción'"
+              (click)="toggleExpandir(opcion.id)"
+            >
+              <i [class]="estaExpandido(opcion.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+            </button>
+            <div class="fila-opcion__info">
+              <span class="fila-opcion__nombre">
+                {{ opcion.nombre }}
+                @if (opcion.fromCatalogo) {
+                  <span class="fila-opcion__tag">Del catálogo</span>
+                }
+              </span>
+              <span class="fila-opcion__meta">sku {{ opcion.sku }} · base ${{ opcion.precioBase | number: '1.0-0' }}</span>
+            </div>
+            <div class="fila-opcion__canales">
+              @for (canal of canales(); track canal.id) {
+                <button type="button" class="pastilla" [attr.data-estado]="estadoDe(opcion.id, canal.id)" (click)="clickPastilla(opcion.id, canal.id)">
+                  <i
+                    [class]="
+                      estadoDe(opcion.id, canal.id) === 'activo'
+                        ? 'pi pi-check'
+                        : estadoDe(opcion.id, canal.id) === 'pausado'
+                          ? 'pi pi-pause'
+                          : 'pi pi-exclamation-triangle'
+                    "
+                  ></i>
+                  <span>{{ tieneOverridePrecio(opcion.id, canal.id) ? ('$' + (precioMostrado(opcion.id, canal.id) | number: '1.0-0')) : 'Base' }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (estaExpandido(opcion.id)) {
+            <div class="fila-opcion__detalle">
+              <div class="fila-opcion__campos">
+                <label class="adicional-detail__campo">
+                  <span class="adicional-detail__campo-label">Título</span>
+                  <input pInputText type="text" [ngModel]="opcion.nombre" (ngModelChange)="actualizarNombreOpcion(opcion.id, $event)" />
+                </label>
+                <label class="adicional-detail__campo">
+                  <span class="adicional-detail__campo-label">Descripción</span>
+                  <input pInputText type="text" [ngModel]="opcion.descripcion" (ngModelChange)="actualizarDescripcionOpcion(opcion.id, $event)" />
+                </label>
+                <label class="adicional-detail__campo">
+                  <span class="adicional-detail__campo-label">Mín. de esta opción</span>
+                  <p-inputNumber [ngModel]="opcion.limiteMinimo" (ngModelChange)="actualizarLimiteMinimoOpcion(opcion.id, $event)" />
+                </label>
+                <label class="adicional-detail__campo">
+                  <span class="adicional-detail__campo-label">Máx. de esta opción</span>
+                  <p-inputNumber [ngModel]="opcion.limiteMaximo" (ngModelChange)="actualizarLimiteMaximoOpcion(opcion.id, $event)" />
+                </label>
+                <button type="button" class="fila-opcion__eliminar" (click)="eliminarOpcion(opcion.id)">Eliminar opción</button>
+              </div>
+
+              <span class="adicional-detail__por-canal-titulo">Por canal</span>
+              <div class="canales-detalle">
+                @for (canal of canales(); track canal.id) {
+                  <div class="canal-tarjeta">
+                    <div class="canal-tarjeta__fila-superior">
+                      <span class="canal-tarjeta__nombre">{{ canal.nombre }}</span>
+                      <div class="canal-tarjeta__precio">
+                        <span>$</span>
+                        <p-inputNumber [ngModel]="precioMostrado(opcion.id, canal.id)" (ngModelChange)="actualizarPrecio(opcion.id, canal.id, $event)" mode="decimal" />
+                      </div>
+                    </div>
+
+                    <span class="pastilla" [attr.data-estado]="estadoDe(opcion.id, canal.id)">
+                      <i
+                        [class]="
+                          estadoDe(opcion.id, canal.id) === 'activo'
+                            ? 'pi pi-check'
+                            : estadoDe(opcion.id, canal.id) === 'pausado'
+                              ? 'pi pi-pause'
+                              : 'pi pi-exclamation-triangle'
+                        "
+                      ></i>
+                      <span>{{ estadoDe(opcion.id, canal.id) === 'activo' ? 'Activo' : estadoDe(opcion.id, canal.id) === 'pausado' ? 'Pausado' : 'Error' }}</span>
+                    </span>
+
+                    @if (estadoDe(opcion.id, canal.id) === 'error') {
+                      @if (diagnosticoDe(opcion.id, canal.id); as diagnostico) {
+                        <div class="diagnostico">
+                          <span>Se intentó: {{ diagnostico.queSeIntento }}</span>
+                          <span>Motivo: {{ diagnostico.motivo }}</span>
+                          <span class="diagnostico__meta">{{ diagnostico.ultimoIntento }} · {{ diagnostico.intentos }} intentos</span>
+                          <p-button label="Reintentar ahora" size="small" (onClick)="reintentar(opcion.id, canal.id)" />
+                        </div>
+                      }
+                    }
+
+                    @if (tieneOverridePrecio(opcion.id, canal.id)) {
+                      <button type="button" class="canal-tarjeta__reset" (click)="usarPrecioBase(opcion.id, canal.id)">Usar precio base</button>
+                    } @else {
+                      <span class="canal-tarjeta__base">Precio base: ${{ opcion.precioBase | number: '1.0-0' }}</span>
+                    }
+
+                    @if (estadoDe(opcion.id, canal.id) !== 'error') {
+                      <button type="button" class="canal-tarjeta__simular" (click)="simularError(opcion.id, canal.id)">Simular error (demo)</button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="adicional-detail__agregar">
+        @switch (modoAgregar()) {
+          @case (null) {
+            <div class="adicional-detail__agregar-botones">
+              <p-button label="Crear opción nueva" icon="pi pi-plus" [text]="true" (onClick)="abrirCrearOpcion()" />
+              <p-button label="Elegir del catálogo" icon="pi pi-search" [text]="true" (onClick)="abrirElegirDelCatalogo()" />
+            </div>
+          }
+          @case ('nuevo') {
+            <div class="adicional-detail__form-nueva-opcion">
+              <label class="adicional-detail__campo">
+                <span class="adicional-detail__campo-label">SKU</span>
+                <input pInputText type="text" [ngModel]="formOpcion.sku()" (ngModelChange)="formOpcion.sku.set($event)" />
+              </label>
+              <label class="adicional-detail__campo">
+                <span class="adicional-detail__campo-label">Título</span>
+                <input pInputText type="text" [ngModel]="formOpcion.nombre()" (ngModelChange)="formOpcion.nombre.set($event)" />
+              </label>
+              <label class="adicional-detail__campo">
+                <span class="adicional-detail__campo-label">Precio</span>
+                <p-inputNumber [ngModel]="formOpcion.precioBase()" (ngModelChange)="formOpcion.precioBase.set($event)" mode="decimal" />
+              </label>
+              <label class="adicional-detail__campo">
+                <span class="adicional-detail__campo-label">Límite mínimo</span>
+                <p-inputNumber [ngModel]="formOpcion.limiteMinimo()" (ngModelChange)="formOpcion.limiteMinimo.set($event)" />
+              </label>
+              <label class="adicional-detail__campo">
+                <span class="adicional-detail__campo-label">Límite máximo</span>
+                <p-inputNumber [ngModel]="formOpcion.limiteMaximo()" (ngModelChange)="formOpcion.limiteMaximo.set($event)" />
+              </label>
+              <p-button label="Añadir" (onClick)="confirmarOpcionNueva()" />
+              <p-button label="Cancelar" [text]="true" (onClick)="cancelarAgregar()" />
+            </div>
+          }
+          @case ('catalogo') {
+            <app-producto-selector-dialog
+              titulo="Elegir del catálogo"
+              [productosYaEnCarta]="conjuntoVacio"
+              (agregar)="opcionesDelCatalogoElegidas($event)"
+              (cerrar)="cancelarAgregar()"
+            />
+          }
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <p>Grupo de adicionales no encontrado.</p>
+}

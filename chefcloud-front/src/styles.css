@@ -13,6 +13,112 @@ body {
   font-weight: 400;
 }
 
+/* Ítem de riel de navegación (icono en chip + etiqueta debajo) — global porque lo usan dos
+   componentes distintos dentro del shell (los links de `app-shell` y el disparador de
+   `app-sesion-switcher`); encapsulado por componente no cruza ese límite sin ::ng-deep, así que
+   vive acá para que ambos compartan el mismo look sin duplicar la receta visual dos veces. */
+.submodulo-item {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 4px;
+  border: none;
+  border-radius: var(--p-border-radius-md, 8px);
+  background: none;
+  color: color-mix(in srgb, white 85%, transparent);
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.submodulo-item__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 0.7rem;
+  border-radius: var(--p-border-radius-md, 8px);
+  background: color-mix(in srgb, white 16%, transparent);
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.submodulo-item__etiqueta {
+  font-size: 10.5px;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submodulo-item:hover .submodulo-item__icono {
+  background: color-mix(in srgb, white 26%, transparent);
+  transform: scale(1.04);
+}
+
+/* Estado seleccionado — solo el icono lleva fondo blanco (ajuste de sesión: la pastilla completa
+   en blanco competía demasiado con el riel). Texto en negrita sobre el degradado. */
+.submodulo-activo {
+  animation: submodulo-activo-entrada 0.2s ease;
+}
+
+.submodulo-activo .submodulo-item__icono {
+  background: #ffffff;
+  color: var(--p-pink-600);
+  box-shadow: 0 2px 8px color-mix(in srgb, black 20%, transparent);
+}
+
+.submodulo-activo .submodulo-item__etiqueta {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Hover sobre el ítem ya activo: nunca tocar el blanco del icono (ver feedback de sesión — perdía
+   contraste con el fondo claro) — solo un leve acento de escala. */
+.submodulo-activo:hover .submodulo-item__icono {
+  transform: scale(1.08);
+}
+
+@keyframes submodulo-activo-entrada {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.submodulo-item--deshabilitado {
+  color: color-mix(in srgb, white 50%, transparent);
+  cursor: default;
+}
+
+.submodulo-item--deshabilitado .submodulo-item__icono {
+  background: color-mix(in srgb, white 10%, transparent);
+}
+
+.submodulo-etiqueta-estado {
+  font-size: 0.55rem;
+  line-height: 1.1;
+  color: color-mix(in srgb, white 50%, transparent);
+}
+
 /* El grupo "root" por defecto del browser haría un cross-fade de TODA la página vieja contra TODA la
    página nueva — al pasar de login (sin sidebar) al shell (con sidebar), eso se ve como que la sidebar
    aparece a medias/parpadea mientras el resto se desvanece. Lo apagamos y animamos cada parte a mano

@@ -1,0 +1,57 @@
+<span class="canal-tarjeta__nombre">{{ canal().nombre }}</span>
+
+<div class="canal-tarjeta__fila-superior">
+  @if (puedeEditar()) {
+    <div class="canal-tarjeta__campo-editable">
+      <app-editable-text-field class="canal-tarjeta__titulo-editable" [valor]="tituloMostrado()" (guardar)="actualizarTituloCanal($event)" />
+      @if (tieneOverrideTitulo()) {
+        <button type="button" class="canal-tarjeta__restablecer" aria-label="Volver al nombre base" title="Volver al nombre base" (click)="usarTituloBaseCanal()">
+          <i class="pi pi-refresh"></i>
+        </button>
+      }
+    </div>
+  } @else {
+    <span class="canal-tarjeta__titulo-texto">{{ tituloMostrado() }}</span>
+  }
+
+  <div class="canal-tarjeta__precio">
+    <span>$</span>
+    @if (puedeEditar()) {
+      <app-editable-text-field class="canal-tarjeta__precio-editable" [valor]="precioMostrado().toString()" (guardar)="actualizarPrecio(+$event)" />
+      @if (tieneOverridePrecio()) {
+        <button type="button" class="canal-tarjeta__restablecer" aria-label="Volver al precio base" title="Volver al precio base" (click)="usarPrecioBase()">
+          <i class="pi pi-refresh"></i>
+        </button>
+      }
+    } @else {
+      <span>{{ precioMostrado() | number: '1.0-0' }}</span>
+      <i class="pi pi-lock canal-tarjeta__candado" title="Editable solo desde Estructura (Operaciones)"></i>
+    }
+  </div>
+</div>
+
+<div class="canal-tarjeta__descripcion-fila">
+  <app-editable-text-field class="canal-tarjeta__descripcion-editable" [valor]="descripcionMostrada()" (guardar)="actualizarDescripcionCanal($event)" />
+  @if (tieneOverrideDescripcion()) {
+    <button
+      type="button"
+      class="canal-tarjeta__restablecer"
+      aria-label="Volver a la descripción base"
+      title="Volver a la descripción base"
+      (click)="usarDescripcionBaseCanal()"
+    >
+      <i class="pi pi-refresh"></i>
+    </button>
+  }
+</div>
+
+@if (estadoDe() === 'error') {
+  @if (diagnosticoDe(); as diagnostico) {
+    <div class="diagnostico">
+      <span>Se intentó: {{ diagnostico.queSeIntento }}</span>
+      <span>Motivo: {{ diagnostico.motivo }}</span>
+      <span class="diagnostico__meta">{{ diagnostico.ultimoIntento }} · {{ diagnostico.intentos }} intentos</span>
+      <p-button label="Reintentar ahora" size="small" (onClick)="reintentar()" />
+    </div>
+  }
+}

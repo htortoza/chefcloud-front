@@ -1,17 +1,3 @@
-export interface OpcionModificador {
-  nombre: string;
-  precio: number;
-  disponible: boolean;
-}
-
-export interface GrupoModificador {
-  id: string;
-  nombre: string;
-  minimo: number;
-  maximo: number;
-  opciones: OpcionModificador[];
-}
-
 export interface Categoria {
   id: string;
   marcaId: string;
@@ -31,7 +17,6 @@ export interface Producto {
   sku: string;
   categoriaId: string;
   etiquetas: string[];
-  gruposModificadores: GrupoModificador[];
   activo: boolean;
 }
 
@@ -45,5 +30,4 @@ export interface CrearProductoPayload {
   sku: string;
   categoriaId: string;
   etiquetas: string[];
-  gruposModificadores: GrupoModificador[];
 }

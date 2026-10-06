@@ -15,9 +15,9 @@ describe('ProductoService', () => {
     expect(productoService.productos().every((p) => p.activo)).toBe(true);
   });
 
-  it('crear agrega un producto nuevo activo', () => {
+  it('crear agrega un producto nuevo activo y devuelve su id', () => {
     const antes = productoService.productos().length;
-    productoService.crear({
+    const id = productoService.crear({
       nombre: 'Ceviche mixto',
       descripcion: 'Pescado y mariscos en leche de tigre',
       precioVenta: 9500,
@@ -25,9 +25,9 @@ describe('ProductoService', () => {
       sku: 'CEV-001',
       categoriaId: productoService.categorias()[0].id,
       etiquetas: [],
-      gruposModificadores: [],
     });
     expect(productoService.productos().length).toBe(antes + 1);
+    expect(productoService.obtenerPorId(id)?.nombre).toBe('Ceviche mixto');
   });
 
   it('archivar pone activo en false sin borrar el producto', () => {

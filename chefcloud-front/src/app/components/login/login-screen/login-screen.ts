@@ -5,14 +5,13 @@ import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
 import { SesionService } from '../../../services/sesion.service';
-import { AccesoExternoService } from '../../../services/acceso-externo.service';
 
-const NIVELES_ACCESO: string[] = ['Master', 'Administrador Holding', 'Administrador Tienda', 'Usuario POS', 'Comprador Externo'];
+const NIVELES_ACCESO: string[] = ['Administrador', 'Marketing', 'Operaciones', 'Cocina / POS', 'Consultor'];
 
 const CARACTERISTICAS: { icono: string; texto: string }[] = [
-  { icono: 'pi pi-bolt', texto: 'Un mismo motor para descuentos, giftcards, códigos QR y fidelización' },
-  { icono: 'pi pi-sitemap', texto: 'Gobernanza por holding, tienda o comprador externo' },
-  { icono: 'pi pi-shield', texto: 'Acceso B2B acotado a un lote, nunca al resto del sistema' },
+  { icono: 'pi pi-book', texto: 'Una carta única, gobernada desde un centro' },
+  { icono: 'pi pi-share-alt', texto: 'Publicación a canal WEB propio y a agregadores conectados' },
+  { icono: 'pi pi-shield', texto: 'Roles claros: quién edita la oferta, quién publica, quién opera' },
 ];
 
 @Component({
@@ -24,7 +23,6 @@ const CARACTERISTICAS: { icono: string; texto: string }[] = [
 })
 export class LoginScreen {
   private readonly sesionService = inject(SesionService);
-  private readonly accesoExternoService = inject(AccesoExternoService);
   private readonly router = inject(Router);
 
   readonly nivelesAcceso = NIVELES_ACCESO;
@@ -32,16 +30,8 @@ export class LoginScreen {
   readonly usuario = signal('');
   readonly clave = signal('');
 
-  /**
-   * Sin backend real: el correo se matchea contra las cuentas de Comprador Externo ya creadas
-   * por un Administrador Holding. Si no matchea, sigue el comportamiento decorativo de siempre
-   * (entra con el rol que ya esté elegido en el selector de sesión del sidebar).
-   */
+  // Sin backend real: cualquier click en "Ingresar" entra con el rol ya elegido en el selector de sesión del sidebar.
   ingresar(): void {
-    const cuentaExterna = this.accesoExternoService.buscarPorEmail(this.usuario());
-    if (cuentaExterna) {
-      this.sesionService.entrarComoCompradorExterno(cuentaExterna.id, cuentaExterna.nombre);
-    }
     this.sesionService.iniciarSesion();
     this.router.navigateByUrl('/');
   }

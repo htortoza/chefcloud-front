@@ -1,21 +1,13 @@
 <h2 class="estructura__titulo-oculto">Productos de la carta, agrupados por sección, con su estado y precio por canal</h2>
 
 <div class="estructura">
-  <div class="estado-global">
-    <div class="estado-global__bloque">
-      <span class="estado-global__etiqueta">Salón</span>
-      <span class="estado-global__valor estado-global__valor--activo">Abierto</span>
-    </div>
-    @for (item of estadoGlobalCanales(); track item.canal.id) {
-      <div class="estado-global__bloque">
-        <span class="estado-global__etiqueta">{{ item.canal.nombre }}</span>
-        <span class="estado-global__valor" [class]="'estado-global__valor--' + item.severidad">{{ item.texto }}</span>
-      </div>
-    }
-  </div>
-
   <div class="estructura__layout">
     <nav class="secciones-nav" aria-label="Navegación de secciones">
+      <button type="button" class="secciones-nav__nueva" (click)="agregarSeccionNueva()">
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        <span>Sección</span>
+      </button>
+
       <button
         type="button"
         class="secciones-nav__item"
@@ -23,6 +15,7 @@
         (click)="seleccionarSeccion('todas')"
       >
         <span class="secciones-nav__nombre">Todas</span>
+        <span class="secciones-nav__contador">{{ todosLosProductosIdsCarta().length }}</span>
       </button>
 
       @for (item of itemsNav(); track item.seccion.id) {
@@ -37,16 +30,49 @@
           @if (item.tieneError) {
             <span class="secciones-nav__error" aria-label="Con error"></span>
           }
+          <span class="secciones-nav__contador">{{ item.seccion.items.length }}</span>
         </button>
       }
-
-      <button type="button" class="secciones-nav__item secciones-nav__nueva" (click)="agregarSeccionNueva()">
-        <i class="pi pi-plus" aria-hidden="true"></i>
-        <span class="secciones-nav__nombre">Sección</span>
-      </button>
     </nav>
 
     <div class="estructura__contenido">
+      <!-- Sticky: queda fija arriba del panel al scrollear la lista de productos (pedido
+           explícito) — por eso el buscador y el encabezado de la tabla, que antes eran dos
+           bloques sueltos, ahora son una sola fila (selección | buscador | canales). -->
+      <div class="tabla-header">
+        <div class="tabla-header__seleccion">
+          <p-checkbox [binary]="true" [ngModel]="todosSeleccionados()" (ngModelChange)="toggleSeleccionarTodos()" />
+          <span class="tabla-header__etiqueta">Seleccionar todos</span>
+        </div>
+
+        <div class="buscador-productos tabla-header__buscador">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input
+            pInputText
+            type="text"
+            placeholder="Buscar producto en esta carta..."
+            [ngModel]="filtroProducto()"
+            (ngModelChange)="filtroProducto.set($event)"
+          />
+          @if (filtroProducto()) {
+            <button type="button" class="buscador-productos__limpiar" aria-label="Limpiar búsqueda" (click)="filtroProducto.set('')">
+              <i class="pi pi-times"></i>
+            </button>
+          }
+        </div>
+
+        <p-select
+          class="tabla-header__tienda"
+          appendTo="body"
+          [options]="tiendas()"
+          optionLabel="nombre"
+          optionValue="id"
+          placeholder="Tienda"
+          [ngModel]="tiendaActual()"
+          (ngModelChange)="seleccionarTienda($event)"
+        />
+      </div>
+
       @if (seleccionados().size > 0) {
         <div class="barra-masiva">
           <span class="barra-masiva__contador">{{ seleccionados().size }} seleccionados</span>
@@ -56,18 +82,10 @@
         </div>
       }
 
-      <div class="tabla-header">
-        <p-checkbox [binary]="true" [ngModel]="todosSeleccionados()" (ngModelChange)="toggleSeleccionarTodos()" />
-        <span class="tabla-header__etiqueta">Producto</span>
-        <div class="tabla-header__canales">
-          @for (canal of canales(); track canal.id) {
-            <span class="tabla-header__canal">{{ canal.nombre }}</span>
-          }
-        </div>
-      </div>
-
       @if (secciones().length === 0) {
         <p class="estructura__vacio">Esta carta todavía no tiene secciones — creá la primera para empezar a agregar productos.</p>
+      } @else if (seccionesVisibles().length === 0) {
+        <p class="estructura__vacio">No se encontraron productos para "{{ filtroProducto() }}".</p>
       }
 
       @for (seccion of seccionesVisibles(); track seccion.id) {
@@ -87,7 +105,7 @@
                 />
               } @else {
                 <span class="seccion__nombre">{{ seccion.nombre }}</span>
-                <p-button icon="pi pi-pencil" [text]="true" size="small" aria-label="Renombrar sección" (onClick)="iniciarRenombre(seccion.id, seccion.nombre)" />
+                <p-button icon="pi pi-pencil" [text]="true" severity="secondary" size="small" aria-label="Renombrar sección" (onClick)="iniciarRenombre(seccion.id, seccion.nombre)" />
               }
 
               <span class="seccion__contador">{{ seccion.items.length }} productos</span>
@@ -100,7 +118,14 @@
                 optionValue="id"
                 [ngModel]="seccion.franjaId"
                 (ngModelChange)="actualizarFranjaSeccion(seccion.id, $event)"
-              />
+              >
+                <ng-template pTemplate="footer">
+                  <button type="button" class="seccion__franja-editar" (click)="abrirHorarios()">
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                    <span>Editar horarios</span>
+                  </button>
+                </ng-template>
+              </p-select>
               @if (franjaDe(seccion); as franja) {
                 @if (franja.horaInicio) {
                   <span class="seccion__franja-horas">{{ franja.horaInicio }}–{{ franja.horaFin }}</span>
@@ -109,7 +134,7 @@
             </div>
 
             <div class="seccion__cluster-ocasional">
-              <p-button label="Agregar producto" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="abrirSelectorProductos(seccion.id)" />
+              <p-button label="Agregar producto" icon="pi pi-plus" size="small" (onClick)="abrirSelectorProductos(seccion.id)" />
 
               <div class="reorden" role="group" [attr.aria-label]="'Reordenar sección ' + seccion.nombre">
                 <button type="button" class="reorden__flecha" aria-label="Mover sección arriba" [disabled]="indiceDe(seccion) === 0" (click)="moverSeccion(seccion.id, 'arriba')">
@@ -131,105 +156,123 @@
           </header>
 
           @if (seccion.items.length === 0) {
-            <p class="seccion__sin-productos">Sin productos todavía.</p>
+            <div class="seccion__vacia">
+              <i class="pi pi-inbox" aria-hidden="true"></i>
+              <span>Esta sección todavía no tiene productos.</span>
+              <p-button label="Agregar producto" icon="pi pi-plus" size="small" (onClick)="abrirSelectorProductos(seccion.id)" />
+            </div>
           }
 
           @for (producto of productosDe(seccion); track producto.id) {
             <div class="fila-producto">
-              <div class="fila-producto__principal">
-                <p-checkbox [binary]="true" [ngModel]="seleccionados().has(producto.id)" (ngModelChange)="toggleSeleccionProducto(producto.id)" />
-                <button
-                  type="button"
+              <div class="fila-producto__principal" (click)="toggleExpandirProducto(producto.id)">
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="seleccionados().has(producto.id)"
+                  (ngModelChange)="toggleSeleccionProducto(producto.id)"
+                  (click)="$event.stopPropagation()"
+                />
+                <i
                   class="fila-producto__chevron"
-                  [attr.aria-label]="estaExpandido(producto.id) ? 'Colapsar detalle de canales' : 'Expandir detalle de canales'"
-                  (click)="toggleExpandirProducto(producto.id)"
-                >
-                  <i [class]="estaExpandido(producto.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
-                </button>
-                <div class="fila-producto__info">
-                  <span class="fila-producto__nombre">{{ producto.nombre }}</span>
-                  <span class="fila-producto__precio-base">${{ producto.precioVenta | number: '1.0-0' }}</span>
-                </div>
-                <div class="fila-producto__canales">
-                  @for (canal of canales(); track canal.id) {
-                    <button
-                      type="button"
-                      class="pastilla"
-                      [attr.data-estado]="estadoDe(producto.id, canal.id)"
-                      (click)="clickPastilla(producto.id, canal.id)"
-                    >
-                      <i
-                        [class]="
-                          estadoDe(producto.id, canal.id) === 'activo'
-                            ? 'pi pi-check'
-                            : estadoDe(producto.id, canal.id) === 'pausado'
-                              ? 'pi pi-pause'
-                              : 'pi pi-exclamation-triangle'
-                        "
-                      ></i>
-                      <span>{{ tieneOverridePrecio(producto.id, canal.id) ? ('$' + (precioMostrado(producto.id, canal.id) | number: '1.0-0')) : 'Base' }}</span>
-                    </button>
+                  [class]="estaExpandido(producto.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                  aria-hidden="true"
+                ></i>
+                <div class="fila-producto__foto">
+                  @if (producto.foto) {
+                    <img [src]="producto.foto" alt="" />
+                  } @else {
+                    <i class="pi pi-image" aria-hidden="true"></i>
                   }
                 </div>
+                <div class="fila-producto__info">
+                  <span class="fila-producto__nombre">{{ producto.nombre }}</span>
+                  <span class="fila-producto__descripcion">{{ producto.descripcion }}</span>
+                  <span class="fila-producto__precio-base">${{ producto.precioVenta | number: '1.0-0' }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="fila-producto__quitar"
+                  aria-label="Quitar de esta sección"
+                  (click)="quitarProductoDeSeccion(seccion.id, producto.id); $event.stopPropagation()"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
               </div>
 
               @if (estaExpandido(producto.id)) {
                 <div class="fila-producto__detalle">
-                  <button type="button" class="fila-producto__quitar" (click)="quitarProductoDeSeccion(seccion.id, producto.id)">Quitar de esta sección</button>
                   <div class="canales-detalle">
                     @for (canal of canales(); track canal.id) {
-                      <div class="canal-tarjeta">
-                        <span class="canal-tarjeta__nombre">{{ canal.nombre }}</span>
-                        <span class="pastilla" [attr.data-estado]="estadoDe(producto.id, canal.id)">
-                          <i
-                            [class]="
-                              estadoDe(producto.id, canal.id) === 'activo'
-                                ? 'pi pi-check'
-                                : estadoDe(producto.id, canal.id) === 'pausado'
-                                  ? 'pi pi-pause'
-                                  : 'pi pi-exclamation-triangle'
-                            "
-                          ></i>
-                          <span>{{ estadoDe(producto.id, canal.id) === 'activo' ? 'Activo' : estadoDe(producto.id, canal.id) === 'pausado' ? 'Pausado' : 'Error' }}</span>
-                        </span>
+                      <app-canal-tarjeta [producto]="producto" [canal]="canal" [cartaId]="carta().id" />
+                    }
+                  </div>
 
-                        @if (estadoDe(producto.id, canal.id) === 'error') {
-                          @if (diagnosticoDe(producto.id, canal.id); as diagnostico) {
-                            <div class="diagnostico">
-                              <span>Se intentó: {{ diagnostico.queSeIntento }}</span>
-                              <span>Motivo: {{ diagnostico.motivo }}</span>
-                              <span class="diagnostico__meta">{{ diagnostico.ultimoIntento }} · {{ diagnostico.intentos }} intentos</span>
-                              <p-button label="Reintentar ahora" size="small" (onClick)="reintentar(producto.id, canal.id)" />
+                  <div class="adicionales-asignados">
+                    <span class="adicionales-asignados__titulo">Adicionales</span>
+
+                    <div class="adicionales-asignados__lista">
+                      @for (grupo of gruposDeProducto(producto.id); track grupo.id) {
+                        <div class="adicional-chip">
+                          <div class="adicional-chip__header">
+                            <button
+                              type="button"
+                              class="fila-producto__chevron"
+                              [attr.aria-label]="estaAdicionalExpandido(grupo.id) ? 'Colapsar' : 'Expandir'"
+                              (click)="toggleAdicional(grupo.id)"
+                            >
+                              <i [class]="estaAdicionalExpandido(grupo.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+                            </button>
+                            <a [routerLink]="['/adicionales', grupo.id]">{{ grupo.nombre }}</a>
+                            <span class="adicional-chip__meta">{{ grupo.opciones.length }} opciones</span>
+                            <p-toggleswitch
+                              class="adicional-chip__toggle"
+                              [ngModel]="grupo.activo"
+                              [disabled]="!puedeEditar()"
+                              [attr.aria-label]="grupo.activo ? 'Pausar grupo' : 'Activar grupo'"
+                              (ngModelChange)="toggleActivoAdicional(grupo.id)"
+                            />
+                            <button
+                              type="button"
+                              class="adicional-chip__quitar"
+                              [disabled]="!puedeEditar()"
+                              aria-label="Quitar grupo de adicionales"
+                              (click)="desasociarAdicional(producto.id, grupo.id)"
+                            >
+                              <i class="pi pi-times"></i>
+                            </button>
+                          </div>
+
+                          @if (estaAdicionalExpandido(grupo.id)) {
+                            <div class="adicional-chip__opciones">
+                              <div class="adicional-chip__resumen">
+                                <span class="adicional-chip__titulo-grupo">{{ grupo.titulo || 'Sin título' }}</span>
+                                <span class="adicional-chip__meta">min {{ grupo.limiteMinimo }} / max {{ grupo.limiteMaximo }}</span>
+                              </div>
+                              @for (opcion of grupo.opciones; track opcion.id) {
+                                <div class="adicional-chip__opcion">
+                                  <span>{{ opcion.nombre }}</span>
+                                  <span>${{ opcion.precioBase | number: '1.0-0' }}</span>
+                                  <span class="adicional-chip__meta">min {{ opcion.limiteMinimo }} / max {{ opcion.limiteMaximo }}</span>
+                                  <p-toggleswitch
+                                    class="adicional-chip__toggle"
+                                    [ngModel]="opcion.disponible"
+                                    [disabled]="!puedeEditar()"
+                                    [attr.aria-label]="opcion.disponible ? 'Apagar opción' : 'Encender opción'"
+                                    (ngModelChange)="toggleDisponibleOpcion(grupo.id, opcion.id)"
+                                  />
+                                </div>
+                              } @empty {
+                                <span class="adicionales-asignados__vacio">Sin opciones todavía.</span>
+                              }
                             </div>
                           }
-                        }
-
-                        <div class="canal-tarjeta__precio">
-                          <span>$</span>
-                          <p-inputNumber
-                            [ngModel]="precioMostrado(producto.id, canal.id)"
-                            (ngModelChange)="actualizarPrecio(producto.id, canal.id, $event)"
-                            [readonly]="!puedeEditar()"
-                            mode="decimal"
-                          />
-                          @if (!puedeEditar()) {
-                            <i class="pi pi-lock canal-tarjeta__candado" title="Editable solo desde Estructura (Operaciones)"></i>
-                          }
                         </div>
+                      } @empty {
+                        <span class="adicionales-asignados__vacio">Sin grupos de adicionales asignados.</span>
+                      }
+                    </div>
 
-                        @if (tieneOverridePrecio(producto.id, canal.id)) {
-                          <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarPrecioBase(producto.id, canal.id)">Usar precio base</button>
-                        } @else {
-                          <span class="canal-tarjeta__base">Precio base: ${{ producto.precioVenta | number: '1.0-0' }}</span>
-                        }
-
-                        @if (estadoDe(producto.id, canal.id) !== 'error') {
-                          <button type="button" class="canal-tarjeta__simular" (click)="simularError(producto.id, canal.id)">Simular error (demo)</button>
-                        }
-
-                        <button type="button" class="canal-tarjeta__editar-catalogo" (click)="editarEnCatalogo(producto.id)">Editar en catálogo →</button>
-                      </div>
-                    }
+                    <button type="button" class="adicionales-asignados__agregar" [disabled]="!puedeEditar()" (click)="abrirAsociarAdicional(producto.id)">+ Añadir adicional</button>
                   </div>
                 </div>
               }
@@ -247,4 +290,16 @@
     (agregar)="agregarProductosSeleccionados(seccionId, $event)"
     (cerrar)="cerrarSelectorProductos()"
   />
+}
+
+@if (productoParaAsociarAdicionalId(); as productoId) {
+  <app-adicional-selector-dialog
+    [gruposYaAsociados]="idsAdicionalesDe(productoId)"
+    (agregar)="agregarAdicionales(productoId, $event)"
+    (cerrar)="cerrarAsociarAdicional()"
+  />
+}
+
+@if (mostrandoHorarios()) {
+  <app-franja-manager-dialog (cerrar)="cerrarHorarios()" />
 }

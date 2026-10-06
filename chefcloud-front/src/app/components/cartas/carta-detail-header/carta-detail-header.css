@@ -1,53 +1,108 @@
+/* Grid real de 2 columnas (etiqueta / valor) × 2 filas (Nombre / Descripción) — la columna de
+   valor es la MISMA columna de grid en ambas filas, así "Menú Regular" y "Carta base..." arrancan
+   en la posición exacta sin depender de adivinar un ancho de etiqueta fijo. Badges+Publicar
+   ocupan las columnas 3ra/4ta de la fila 1, que quedan vacías en la fila 2 (ya no hay vigencia
+   editable ahí — ver CLAUDE.md, se eliminó el concepto de carta no-regular). */
 .carta-detail-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.15rem;
 }
 
-.carta-detail-header__fila {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+.carta-detail-header__etiqueta-campo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
 }
 
 .carta-detail-header__nombre {
   font-size: 1.1rem;
   font-weight: 500;
-  flex: 1;
   min-width: 0;
 }
 
-.carta-detail-header__fila--secundaria {
-  align-items: flex-start;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.carta-detail-header__descripcion {
-  width: 50%;
-  min-width: 0;
-}
-
-.carta-detail-header__vigencia {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.vigencia-resumen {
+.carta-detail-header__badges {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.35rem;
+}
+
+/* Es un <button> (dispara pausar/activar el canal entero, con confirmación) — reset de los
+   estilos nativos de botón para que siga pareciendo una pastilla, no un botón de formulario. */
+.badge-canal {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+/* Deja clara la acción del click (pausar/activar toda la carta en ese canal) sin esperar al
+   hover — sutil (opacidad reducida) para no competir con el logo, que sigue siendo lo principal
+   del badge. */
+.badge-canal__accion {
+  font-size: 0.75rem;
+  opacity: 0.55;
+}
+
+button.badge-canal:hover .badge-canal__accion {
+  opacity: 0.9;
+}
+
+/* Solo los botones reales (WEB/Uber Eats/Rappi/PedidosYa) dan la señal de "esto se puede
+   tocar" — "Salón" sigue siendo un <span> inerte, sin mecanismo de pausado en el modelo. */
+button.badge-canal {
   cursor: pointer;
 }
 
-.vigencia-edicion {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+button.badge-canal:hover {
+  background: var(--p-surface-200);
 }
+
+.badge-canal--activo {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
+
+button.badge-canal--activo:hover {
+  background: var(--p-green-200);
+}
+
+/* El logo hereda el color del badge vía `currentColor` — un solo lugar decide gris vs. verde
+   (la clase `--activo` del badge), nunca un color de marca propio del canal. Alto fijo, ancho
+   libre, para que los 3 logos (proporciones bien distintas entre sí) queden del mismo tamaño
+   visual sin deformarse. */
+.badge-canal__logo {
+  height: 0.6rem;
+  width: auto;
+  display: block;
+}
+
+/* El wordmark de Rappi y PedidosYa tiene trazo más fino que el de Uber Eats — a la misma altura
+   nominal se leen más chicos. Les subimos la altura un poco para que pesen visualmente parecido,
+   no para que midan lo mismo en píxeles. */
+.badge-canal__logo--rappi,
+.badge-canal__logo--pedidosya {
+  height: 0.8rem;
+}
+
+.badge-canal__logo path,
+.badge-canal__logo polygon {
+  fill: currentColor;
+}
+
+.carta-detail-header__descripcion {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+  min-width: 0;
+}
+

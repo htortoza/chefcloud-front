@@ -1,16 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import { CartaDetailEstructura } from './carta-detail-estructura';
 import { CartaService } from '../../../services/carta.service';
 import { ProductoService } from '../../../services/producto.service';
 import { SesionService } from '../../../services/sesion.service';
+import { AdicionalService } from '../../../services/adicional.service';
 
 describe('CartaDetailEstructura', () => {
   let fixture: ComponentFixture<CartaDetailEstructura>;
   let cartaService: CartaService;
   let productoService: ProductoService;
   let sesionService: SesionService;
+  let adicionalService: AdicionalService;
   let cartaId: string;
 
   function refrescarInput() {
@@ -19,10 +22,11 @@ describe('CartaDetailEstructura', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [CartaDetailEstructura], providers: [provideRouter([])] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [CartaDetailEstructura], providers: [provideRouter([]), ConfirmationService] }).compileComponents();
     cartaService = TestBed.inject(CartaService);
     productoService = TestBed.inject(ProductoService);
     sesionService = TestBed.inject(SesionService);
+    adicionalService = TestBed.inject(AdicionalService);
     cartaId = cartaService.crear('Carta de prueba');
     fixture = TestBed.createComponent(CartaDetailEstructura);
     fixture.componentRef.setInput('carta', cartaService.cartas().find((c) => c.id === cartaId));
@@ -65,33 +69,6 @@ describe('CartaDetailEstructura', () => {
 
     expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.estado).toBe('error');
     expect(fixture.componentInstance.estaExpandido(producto.id)).toBe(true);
-  });
-
-  it('editar el precio igual al precio base limpia el override', () => {
-    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
-    const [producto] = productoService.todos();
-    cartaService.agregarItem(cartaId, seccionId, producto.id);
-    refrescarInput();
-    const [canal] = cartaService.canales();
-
-    fixture.componentInstance.actualizarPrecio(producto.id, canal.id, 9999);
-    expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.precio).toBe(9999);
-
-    fixture.componentInstance.actualizarPrecio(producto.id, canal.id, producto.precioVenta);
-    expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.precio).toBeUndefined();
-  });
-
-  it('reintentar limpia el error del diagnóstico', () => {
-    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
-    const [producto] = productoService.todos();
-    cartaService.agregarItem(cartaId, seccionId, producto.id);
-    const [canal] = cartaService.canales();
-    cartaService.simularErrorCanal(cartaId, canal.id, producto.id, 'Actualizar precio', 'Timeout');
-    refrescarInput();
-
-    fixture.componentInstance.reintentar(producto.id, canal.id);
-
-    expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.estado).toBe('activo');
   });
 
   it('simular error deja el producto en error y expande su fila', () => {
@@ -176,7 +153,7 @@ describe('CartaDetailEstructura', () => {
     expect(fixture.componentInstance.seccionParaAgregarId()).toBeNull();
   });
 
-  it('rol marketing no puede alternar estado ni editar precio — el permiso bloquea el campo', () => {
+  it('rol marketing no puede alternar estado — el permiso bloquea el campo', () => {
     const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
     const [producto] = productoService.todos();
     cartaService.agregarItem(cartaId, seccionId, producto.id);
@@ -186,9 +163,6 @@ describe('CartaDetailEstructura', () => {
 
     fixture.componentInstance.clickPastilla(producto.id, canal.id);
     expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.estado ?? 'activo').toBe('activo');
-
-    fixture.componentInstance.actualizarPrecio(producto.id, canal.id, 5000);
-    expect(cartaService.estadoCanal(cartaId, canal.id, producto.id)?.precio).toBeUndefined();
   });
 
   it('rol marketing sí puede expandir el diagnóstico de un error (es lectura, no edición)', () => {
@@ -400,11 +374,196 @@ describe('CartaDetailEstructura', () => {
     expect(fixture.nativeElement.querySelector('.secciones-nav__error')).toBeTruthy();
   });
 
+  it('filtroProducto acota seccionesVisibles a las secciones con un producto que matchea, cruzando secciones', () => {
+    const seccionA = cartaService.agregarSeccion(cartaId, 'Entradas');
+    const seccionB = cartaService.agregarSeccion(cartaId, 'Platos de fondo');
+    const [productoA, productoB] = productoService.todos();
+    cartaService.agregarItem(cartaId, seccionA, productoA.id);
+    cartaService.agregarItem(cartaId, seccionB, productoB.id);
+    refrescarInput();
+
+    fixture.componentInstance.filtroProducto.set(productoB.nombre.slice(0, 4));
+
+    expect(fixture.componentInstance.seccionesVisibles().map((s) => s.id)).toEqual([seccionB]);
+  });
+
+  it('filtroProducto es case-insensitive y filtra también los productos mostrados dentro de la sección', () => {
+    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
+    const [productoA, productoB] = productoService.todos();
+    cartaService.agregarItem(cartaId, seccionId, productoA.id);
+    cartaService.agregarItem(cartaId, seccionId, productoB.id);
+    refrescarInput();
+    const seccion = cartaService.cartas().find((c) => c.id === cartaId)!.secciones[0];
+
+    fixture.componentInstance.filtroProducto.set(productoA.nombre.toUpperCase());
+
+    expect(fixture.componentInstance.productosDe(seccion).map((p) => p.id)).toEqual([productoA.id]);
+  });
+
+  it('filtroProducto sin resultados deja seccionesVisibles vacío', () => {
+    cartaService.agregarSeccion(cartaId, 'Entradas');
+    refrescarInput();
+
+    fixture.componentInstance.filtroProducto.set('producto que no existe');
+
+    expect(fixture.componentInstance.seccionesVisibles().length).toBe(0);
+  });
+
+  it('seleccionar una sección del nav limpia el filtro de búsqueda', () => {
+    const seccionA = cartaService.agregarSeccion(cartaId, 'Entradas');
+    refrescarInput();
+    fixture.componentInstance.filtroProducto.set('algo');
+
+    fixture.componentInstance.seleccionarSeccion(seccionA);
+
+    expect(fixture.componentInstance.filtroProducto()).toBe('');
+  });
+
+  it('con búsqueda activa, la selección masiva se acota a los productos que matchean', () => {
+    const seccionA = cartaService.agregarSeccion(cartaId, 'Entradas');
+    const [productoA, productoB] = productoService.todos();
+    cartaService.agregarItem(cartaId, seccionA, productoA.id);
+    cartaService.agregarItem(cartaId, seccionA, productoB.id);
+    refrescarInput();
+
+    fixture.componentInstance.filtroProducto.set(productoA.nombre);
+
+    expect(fixture.componentInstance.todosLosProductosIds()).toEqual([productoA.id]);
+  });
+
+  it('una sección sin productos muestra el estado vacío con botón para agregar', () => {
+    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
+    refrescarInput();
+
+    expect(fixture.nativeElement.querySelector('.seccion__vacia')).toBeTruthy();
+    const boton = Array.from(fixture.nativeElement.querySelectorAll('.seccion__vacia button')).find((b: any) =>
+      b.textContent.includes('Agregar producto'),
+    ) as HTMLButtonElement;
+    expect(boton).toBeTruthy();
+
+    boton.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.seccionParaAgregarId()).toBe(seccionId);
+  });
+
   it('carta sin secciones: el nav muestra solo "Todas" y el botón de agregar, y el panel muestra el mensaje vacío', () => {
     refrescarInput();
 
     const textos = Array.from(fixture.nativeElement.querySelectorAll('.secciones-nav__item')).map((el: any) => el.textContent.trim());
-    expect(textos.length).toBe(2); // "Todas" + "Sección" (botón agregar)
+    expect(textos.length).toBe(1); // "Todas" — "+ Sección" ya no es un ítem de lista, es un botón aparte
+    expect(fixture.nativeElement.querySelector('.secciones-nav__nueva')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.estructura__vacio')).toBeTruthy();
+  });
+
+  it('gruposDeProducto refleja los grupos de adicionales asociados al producto', () => {
+    const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
+    const [producto] = productoService.todos();
+    cartaService.agregarItem(cartaId, seccionId, producto.id);
+    const [grupo] = adicionalService.grupos();
+    adicionalService.asociarProducto(grupo.id, producto.id);
+    refrescarInput();
+
+    expect(fixture.componentInstance.gruposDeProducto(producto.id).map((g) => g.id)).toContain(grupo.id);
+  });
+
+  it('abrirAsociarAdicional/cerrarAsociarAdicional alternan qué fila tiene el buscador abierto', () => {
+    const [producto] = productoService.todos();
+    expect(fixture.componentInstance.productoParaAsociarAdicionalId()).toBeNull();
+
+    fixture.componentInstance.abrirAsociarAdicional(producto.id);
+    expect(fixture.componentInstance.productoParaAsociarAdicionalId()).toBe(producto.id);
+
+    fixture.componentInstance.cerrarAsociarAdicional();
+    expect(fixture.componentInstance.productoParaAsociarAdicionalId()).toBeNull();
+  });
+
+  it('idsAdicionalesDe refleja los grupos ya asociados al producto', () => {
+    const [producto] = productoService.todos();
+    const [grupo] = adicionalService.grupos();
+    adicionalService.asociarProducto(grupo.id, producto.id);
+
+    expect(fixture.componentInstance.idsAdicionalesDe(producto.id)).toEqual(new Set([grupo.id]));
+  });
+
+  it('agregarAdicionales vincula varios grupos de una vez y cierra el selector', () => {
+    const [producto] = productoService.todos();
+    const [grupoA, grupoB] = adicionalService.grupos();
+    fixture.componentInstance.abrirAsociarAdicional(producto.id);
+
+    fixture.componentInstance.agregarAdicionales(producto.id, [grupoA.id, grupoB.id]);
+
+    const idsAsociados = adicionalService.gruposDeProducto(producto.id).map((g) => g.id);
+    expect(idsAsociados).toContain(grupoA.id);
+    expect(idsAsociados).toContain(grupoB.id);
+    expect(fixture.componentInstance.productoParaAsociarAdicionalId()).toBeNull();
+  });
+
+  it('desasociarAdicional quita el vínculo', () => {
+    const [producto] = productoService.todos();
+    const [grupo] = adicionalService.grupos();
+    adicionalService.asociarProducto(grupo.id, producto.id);
+
+    fixture.componentInstance.desasociarAdicional(producto.id, grupo.id);
+
+    expect(adicionalService.gruposDeProducto(producto.id).map((g) => g.id)).not.toContain(grupo.id);
+  });
+
+  it('toggleAdicional alterna qué grupo está expandido, por grupoId', () => {
+    const [grupo] = adicionalService.grupos();
+    expect(fixture.componentInstance.estaAdicionalExpandido(grupo.id)).toBe(false);
+
+    fixture.componentInstance.toggleAdicional(grupo.id);
+    expect(fixture.componentInstance.estaAdicionalExpandido(grupo.id)).toBe(true);
+
+    fixture.componentInstance.toggleAdicional(grupo.id);
+    expect(fixture.componentInstance.estaAdicionalExpandido(grupo.id)).toBe(false);
+  });
+
+  it('toggleActivoAdicional alterna el estado activo/pausado del grupo', () => {
+    const [grupo] = adicionalService.grupos();
+    expect(adicionalService.obtenerPorId(grupo.id)?.activo).toBe(true);
+
+    fixture.componentInstance.toggleActivoAdicional(grupo.id);
+    expect(adicionalService.obtenerPorId(grupo.id)?.activo).toBe(false);
+
+    fixture.componentInstance.toggleActivoAdicional(grupo.id);
+    expect(adicionalService.obtenerPorId(grupo.id)?.activo).toBe(true);
+  });
+
+  it('eliminarOpcionAdicional quita una opción del grupo', () => {
+    const [grupo] = adicionalService.grupos();
+    const [opcion] = grupo.opciones;
+
+    fixture.componentInstance.eliminarOpcionAdicional(grupo.id, opcion.id);
+
+    expect(adicionalService.obtenerPorId(grupo.id)?.opciones.find((o) => o.id === opcion.id)).toBeUndefined();
+  });
+
+  it('rol marketing no puede alternar activo/pausado ni eliminar opciones de un grupo — el permiso bloquea la acción', () => {
+    const [grupo] = adicionalService.grupos();
+    const [opcion] = grupo.opciones;
+    sesionService.entrarComo('marketing', 'Marketing Demo');
+    refrescarInput();
+
+    fixture.componentInstance.toggleActivoAdicional(grupo.id);
+    expect(adicionalService.obtenerPorId(grupo.id)?.activo).toBe(true);
+
+    fixture.componentInstance.eliminarOpcionAdicional(grupo.id, opcion.id);
+    expect(adicionalService.obtenerPorId(grupo.id)?.opciones.find((o) => o.id === opcion.id)).toBeDefined();
+  });
+
+  it('rol marketing no puede abrir el buscador ni asociar/desasociar adicionales — el permiso bloquea la acción', () => {
+    const [producto] = productoService.todos();
+    const [grupo] = adicionalService.grupos();
+    adicionalService.asociarProducto(grupo.id, producto.id);
+    sesionService.entrarComo('marketing', 'Marketing Demo');
+    refrescarInput();
+
+    fixture.componentInstance.abrirAsociarAdicional(producto.id);
+    expect(fixture.componentInstance.productoParaAsociarAdicionalId()).toBeNull();
+
+    fixture.componentInstance.desasociarAdicional(producto.id, grupo.id);
+    expect(adicionalService.gruposDeProducto(producto.id).map((g) => g.id)).toContain(grupo.id);
   });
 });

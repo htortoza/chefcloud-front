@@ -1,9 +1,10 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { SesionService } from '../services/sesion.service';
 
+/** Landing por defecto tras login. Un solo destino hoy porque Productos y Cartas son los únicos
+ *  módulos activos y todos los roles los ven — vuelve a ramificar por rol cuando un segundo
+ *  módulo (Tiendas/Canales) necesite un destino distinto según el rol. */
 export const rolRedirectGuard: CanActivateFn = () => {
-  const sesionService = inject(SesionService);
   const router = inject(Router);
-  return router.parseUrl(sesionService.esCompradorExterno() ? '/mi-lote' : '/giftcards');
+  return router.parseUrl('/cartas');
 };

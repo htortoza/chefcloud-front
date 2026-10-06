@@ -49,25 +49,10 @@ describe('CartaService', () => {
     expect(seccion.items.map((i) => i.productoId)).toContain(producto.id);
   });
 
-  it('asignar dos cartas fecha-especial con rangos y franjas superpuestas a la misma tienda devuelve conflicto', () => {
+  it('asignar devuelve ok cuando la carta existe', () => {
     const tienda = cartaService.tiendas()[0];
-
-    const cartaA = cartaService.crear('Fiestas Patrias — todo el día');
-    cartaService.actualizarGeneral(cartaA, {
-      tipoVigencia: 'fecha-especial',
-      rangoFechas: { desde: '2026-09-18', hasta: '2026-09-19' },
-      franjaEspecial: 'todo-dia',
-    });
-    expect(cartaService.asignar(cartaA, tienda.id)).toEqual({ ok: true });
-
-    const cartaB = cartaService.crear('Fiestas Patrias — almuerzo especial');
-    cartaService.actualizarGeneral(cartaB, {
-      tipoVigencia: 'fecha-especial',
-      rangoFechas: { desde: '2026-09-18', hasta: '2026-09-18' },
-      franjaEspecial: 'almuerzo',
-    });
-    const resultado = cartaService.asignar(cartaB, tienda.id);
-    expect(resultado.ok).toBe(false);
+    const cartaId = cartaService.crear('Carta de verano');
+    expect(cartaService.asignar(cartaId, tienda.id)).toEqual({ ok: true });
   });
 
   it('cartasQueUsanProducto sube en 1 cuando una nueva carta referencia ese producto', () => {
@@ -172,5 +157,75 @@ describe('CartaService', () => {
     estado = cartaService.estadoCanal(cartaId, canal.id, producto.id);
     expect(estado?.estado).toBe('activo');
     expect(estado?.diagnostico).toBeUndefined();
+  });
+
+  describe('duplicarParaTienda', () => {
+    it('crea una copia independiente de secciones/items, exclusiva de esa tienda', () => {
+      const cartaId = cartaService.crear('Carta de verano');
+      const seccionId = cartaService.agregarSeccion(cartaId, 'Entradas');
+      const [producto] = productoService.todos();
+      cartaService.agregarItem(cartaId, seccionId, producto.id);
+      const tienda = cartaService.tiendas()[0];
+
+      const copiaId = cartaService.duplicarParaTienda(cartaId, tienda.id);
+      const copia = cartaService.cartas().find((c) => c.id === copiaId)!;
+
+      expect(copia.tiendaExclusivaId).toBe(tienda.id);
+      expect(copia.cartaOrigenId).toBe(cartaId);
+      expect(copia.secciones[0].items.map((i) => i.productoId)).toContain(producto.id);
+
+      // Independiente: tocar la copia no debe afectar la original.
+      cartaService.quitarItem(copiaId, copia.secciones[0].id, producto.id);
+      const original = cartaService.cartas().find((c) => c.id === cartaId)!;
+      expect(original.secciones[0].items.map((i) => i.productoId)).toContain(producto.id);
+    });
+
+    it('copia los overrides por canal existentes, re-keyeados a la nueva carta', () => {
+      const cartaId = cartaService.crear('Carta de verano');
+      const [canal] = cartaService.canales();
+      const [producto] = productoService.todos();
+      cartaService.setPrecioCanal(cartaId, canal.id, producto.id, 12345);
+      const tienda = cartaService.tiendas()[0];
+
+      const copiaId = cartaService.duplicarParaTienda(cartaId, tienda.id);
+
+      expect(cartaService.estadoCanal(copiaId, canal.id, producto.id)?.precio).toBe(12345);
+    });
+
+    it('mueve la asignación: la tienda queda exclusiva de la copia, ya no de la original', () => {
+      const cartaId = cartaService.crear('Carta de verano');
+      const tienda = cartaService.tiendas()[0];
+      cartaService.asignar(cartaId, tienda.id);
+
+      const copiaId = cartaService.duplicarParaTienda(cartaId, tienda.id);
+
+      expect(cartaService.tiendasAsignadas(cartaId).map((t) => t.id)).not.toContain(tienda.id);
+      expect(cartaService.tiendasAsignadas(copiaId).map((t) => t.id)).toContain(tienda.id);
+    });
+  });
+
+  describe('familiaDeCarta / cartaQueSirveATienda', () => {
+    it('familiaDeCarta devuelve la compartida y sus copias, consultando desde cualquiera de las dos', () => {
+      const cartaId = cartaService.crear('Carta de verano');
+      const tienda = cartaService.tiendas()[0];
+      const copiaId = cartaService.duplicarParaTienda(cartaId, tienda.id);
+
+      const familiaDesdeOriginal = cartaService.familiaDeCarta(cartaId).map((c) => c.id).sort();
+      const familiaDesdeCopia = cartaService.familiaDeCarta(copiaId).map((c) => c.id).sort();
+
+      expect(familiaDesdeOriginal).toEqual([cartaId, copiaId].sort());
+      expect(familiaDesdeCopia).toEqual([cartaId, copiaId].sort());
+    });
+
+    it('cartaQueSirveATienda encuentra la copia exclusiva, o la compartida si no hay copia, o undefined si ninguna', () => {
+      const cartaId = cartaService.crear('Carta de verano');
+      const [tiendaA, tiendaB, tiendaC] = cartaService.tiendas();
+      cartaService.asignar(cartaId, tiendaA.id);
+      const copiaId = cartaService.duplicarParaTienda(cartaId, tiendaB.id);
+
+      expect(cartaService.cartaQueSirveATienda(cartaId, tiendaA.id)).toBe(cartaId);
+      expect(cartaService.cartaQueSirveATienda(cartaId, tiendaB.id)).toBe(copiaId);
+      expect(cartaService.cartaQueSirveATienda(cartaId, tiendaC.id)).toBeUndefined();
+    });
   });
 });

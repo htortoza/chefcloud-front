@@ -1,0 +1,12 @@
+<div class="asignacion">
+  @if (mensajeConflicto(); as conflicto) {
+    <p-message severity="warn" [text]="conflicto" />
+  }
+
+  @for (tienda of tiendas(); track tienda.id) {
+    <div class="asignacion__fila">
+      <p-checkbox [binary]="true" [ngModel]="estaAsignada(tienda.id)" (ngModelChange)="toggleTienda(tienda.id)" [inputId]="tienda.id" />
+      <label [for]="tienda.id">{{ tienda.nombre }}</label>
+    </div>
+  }
+</div>

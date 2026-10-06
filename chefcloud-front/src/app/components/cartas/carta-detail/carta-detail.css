@@ -1,0 +1,79 @@
+/* Caja única para header + tabs + contenido, alto fijo (mismo cálculo que `.shell-nav`: 100vh
+   menos el padding de 24px del `.shell-contenido` que la envuelve) en vez de alto natural — así
+   el nombre/descripción/publicar quedan dentro de la misma caja que las secciones, y el scroll
+   de la página deja de mover todo junto (gotcha documentado en CLAUDE.md para la sidebar,
+   mismo patrón acá: alto fijo + cada panel interno con su propio overflow). */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 48px);
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 8px);
+  overflow: hidden;
+}
+
+app-carta-detail-header {
+  flex: 0 0 auto;
+  padding: 1rem 1.5rem 0.5rem;
+}
+
+.p-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.p-tablist {
+  flex: 0 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Más chicas que el default de Aura (1rem padding / 600 de peso en todas) — acá el peso marca el
+   estado (activa=700, inactiva=400), no una base común a todas. */
+.p-tab {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* Tabs sin rosa/naranjo: la pestaña activa se distingue por negrita + línea oscura, nunca solo
+   por color (WCAG 1.4.1) — reserva el degradado de marca para los botones de acción primaria
+   (Publicar), no para navegación/selección. */
+.p-tab[data-p-active='true'] {
+  color: var(--p-surface-900);
+  font-weight: 700;
+}
+
+.p-tab:not([data-p-active='true']) {
+  color: var(--p-surface-400);
+  font-weight: 400;
+}
+
+.p-tablist-active-bar {
+  background: var(--p-surface-900);
+}
+
+.p-tabpanels {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* `:not([hidden])` importa: PrimeNG oculta el tabpanel inactivo con el atributo `hidden` nativo
+   (`display:none` del user-agent) — sin el guard, nuestro `display:flex` con la misma
+   especificidad que `[hidden]` ganaría por venir después en la cascada y lo mostraría igual. */
+.p-tabpanel:not([hidden]) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+app-carta-detail-estructura,
+app-carta-detail-asignacion {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

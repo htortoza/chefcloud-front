@@ -2,12 +2,20 @@
   [(visible)]="visible"
   [modal]="true"
   [maximizable]="true"
-  header="Agregar productos a la sección"
+  [header]="titulo()"
   [style]="{ width: '90vw', maxWidth: '72rem', height: '85vh' }"
   [contentStyle]="{ height: '100%', display: 'flex', flexDirection: 'column' }"
   (onHide)="cerrar.emit()"
 >
   <div class="selector">
+    @if (catalogoVacio()) {
+      <div class="selector__vacio-catalogo">
+        <i class="pi pi-shopping-bag" aria-hidden="true"></i>
+        <span class="selector__vacio-catalogo-titulo">Todavía no creaste productos en tu catálogo</span>
+        <span class="selector__vacio-catalogo-texto">Creá el primero para poder agregarlo.</span>
+        <p-button label="Crear producto" icon="pi pi-plus" (onClick)="abrirCrearProducto()" />
+      </div>
+    } @else {
     <div class="selector__filtros">
       <input
         pInputText
@@ -29,6 +37,7 @@
         [scrollHeight]="'20rem'"
       />
       <span class="selector__contador">{{ productosFiltrados().length }} productos</span>
+      <p-button label="Crear producto" icon="pi pi-plus" [text]="true" (onClick)="abrirCrearProducto()" />
     </div>
 
     <p-table
@@ -78,9 +87,6 @@
           </td>
           <td>
             <div class="selector__etiquetas">
-              @if (producto.gruposModificadores.length > 0) {
-                <p-tag severity="info" value="Con modificadores" />
-              }
               @for (etiqueta of producto.etiquetas; track etiqueta) {
                 <p-tag severity="secondary" [value]="etiqueta" />
               }
@@ -97,6 +103,7 @@
         </tr>
       </ng-template>
     </p-table>
+    }
   </div>
 
   <ng-template pTemplate="footer">
@@ -109,3 +116,7 @@
     />
   </ng-template>
 </p-dialog>
+
+@if (crearAbierto()) {
+  <app-producto-detail-drawer (creado)="productoCreado($event)" (cerrar)="cerrarCrearProducto()" />
+}

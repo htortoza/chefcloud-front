@@ -1,0 +1,40 @@
+<app-page-header titulo="Adicionales">
+  <p-button label="Nuevo grupo" icon="pi pi-plus" (onClick)="crearGrupo()" />
+</app-page-header>
+
+<input
+  pInputText
+  type="text"
+  class="adicionales-buscador"
+  placeholder="Buscar grupo..."
+  [ngModel]="termino()"
+  (ngModelChange)="termino.set($event)"
+/>
+
+<p-table [value]="filas()" dataKey="id" class="adicionales-tabla">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Nombre</th>
+      <th>Título</th>
+      <th>Descripción</th>
+      <th># Opciones</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-fila>
+    <tr (click)="abrirGrupo(fila.id)">
+      <td class="adicional-nombre">{{ fila.nombre }}</td>
+      <td>{{ fila.titulo || '—' }}</td>
+      <td>{{ fila.descripcion || '—' }}</td>
+      <td>{{ fila.opciones.length }}</td>
+      <td>
+        <p-button icon="pi pi-trash" [text]="true" severity="danger" size="small" (onClick)="eliminarGrupo(fila.id); $event.stopPropagation()" />
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="5" class="adicionales-vacio">Ningún grupo de adicionales todavía.</td>
+    </tr>
+  </ng-template>
+</p-table>

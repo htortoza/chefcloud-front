@@ -1,18 +1,28 @@
 .shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  background: var(--p-surface-50);
 }
 
+/* Riel flotante tipo ClickUp — angosto, con el degradado marca al 100% (orange.400 → pink.600,
+   mismo origen que los botones primarios en app.config.ts) en vez del violeta/azul de la
+   referencia. Mismo radio que un botón (`--p-border-radius-md`, el token que usa Button en el
+   preset Aura) en vez de un radio grande propio. Margen en los 3 lados libres; pegado al
+   contenido a la derecha para no partir el layout en dos tarjetas separadas. */
 .shell-nav {
-  flex: 0 0 80px;
-  max-width: 100px;
+  flex: 0 0 64px;
+  max-width: 64px;
+  height: calc(100vh - 24px);
+  margin: 12px 0 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 6px;
-  border-right: 1px solid var(--p-content-border-color);
-  background: var(--p-surface-0);
+  padding: 14px 4px;
+  border-radius: var(--p-border-radius-md, 8px);
+  background: linear-gradient(180deg, var(--p-orange-400) 0%, var(--p-pink-600) 100%);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--p-pink-600) 30%, transparent);
   view-transition-name: shell-nav;
+  overflow-y: auto;
 }
 
 .marca-activa {
@@ -21,14 +31,14 @@
   align-items: center;
   gap: 0.125rem;
   padding: 0 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--p-content-border-color);
+  border-bottom: 1px solid color-mix(in srgb, white 25%, transparent);
   margin-bottom: 0.5rem;
   text-align: center;
 }
 
 .marca-activa__nombre {
   font-weight: 600;
-  color: var(--p-text-color);
+  color: #ffffff;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -37,7 +47,7 @@
 
 .marca-activa__dominio {
   font-size: 0.8rem;
-  color: var(--p-text-muted-color);
+  color: color-mix(in srgb, white 70%, transparent);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -50,108 +60,29 @@
   gap: 4px;
 }
 
-.submodulo-item {
-  position: relative;
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 4px;
-  border-radius: var(--p-border-radius-md, 6px);
-  color: var(--p-text-color);
-  text-decoration: none;
-  text-align: center;
-  transition: color 0.2s ease;
-}
-
-.submodulo-item__icono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 0.85rem;
-  border-radius: var(--p-border-radius-md, 8px);
-  background: var(--p-surface-50);
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.submodulo-item__etiqueta {
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.submodulo-item:hover .submodulo-item__icono {
-  background: var(--p-surface-100);
-  transform: scale(1.04);
-}
-
-.submodulo-activo .submodulo-item__icono {
-  color: var(--p-orange-600);
-  background: color-mix(in srgb, var(--p-orange-300) 30%, transparent);
-  animation: submodulo-activo-entrada 0.2s ease;
-}
-
-.submodulo-activo .submodulo-item__etiqueta {
-  color: var(--p-orange-600);
-  font-weight: 600;
-}
-
-@keyframes submodulo-activo-entrada {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.submodulo-item--deshabilitado {
-  color: var(--p-text-muted-color);
-  cursor: default;
-}
-
 .submodulo-etiqueta-estado {
-  font-size: 0.65rem;
-  color: var(--p-text-muted-color);
+  font-size: 0.55rem;
+  line-height: 1.1;
+  color: color-mix(in srgb, white 50%, transparent);
 }
 
+/* Pie del riel — mismo patrón visual que un ítem de navegación (`.submodulo-item`, global en
+   styles.css) para "Cambiar rol" y "Ajustes", en vez del botón de texto ancho + círculo suelto
+   que había antes. Separador propio arriba, igual criterio que el borde bajo "marca-activa". */
 .shell-nav__pie {
   margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, white 25%, transparent);
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 4px;
-}
-
-.shell-nav__cuenta-boton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: var(--p-border-radius-md, 6px);
-  background: none;
-  color: var(--p-text-muted-color);
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.shell-nav__cuenta-boton:hover {
-  background: var(--p-surface-50);
-  color: var(--p-text-color);
 }
 
 .shell-contenido {
   flex: 1 1 auto;
   min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
   view-transition-name: pagina-principal;
 }
 

@@ -1,4 +1,5 @@
 <p-toast [baseZIndex]="9999" />
+<p-confirmDialog [style]="{ maxWidth: '28rem' }" />
 
 <div class="shell">
   @if (mostrarSidebar()) {
@@ -28,8 +29,9 @@
     <div class="shell-nav__pie">
       <app-sesion-switcher />
 
-      <button type="button" class="shell-nav__cuenta-boton" (click)="menuCuenta.toggle($event)" aria-label="Configuración de cuenta">
-        <i class="pi pi-cog"></i>
+      <button type="button" class="submodulo-item shell-nav__cuenta-boton" (click)="menuCuenta.toggle($event)" aria-label="Configuración de cuenta">
+        <span class="submodulo-item__icono"><i class="pi pi-cog"></i></span>
+        <span class="submodulo-item__etiqueta">Ajustes</span>
       </button>
       <p-menu #menuCuenta [model]="itemsMenuCuenta" [popup]="true" appendTo="body" />
     </div>

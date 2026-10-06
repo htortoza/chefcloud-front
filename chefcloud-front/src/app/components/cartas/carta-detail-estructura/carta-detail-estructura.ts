@@ -3,29 +3,40 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { Select } from 'primeng/select';
-import { InputNumber } from 'primeng/inputnumber';
 import { InputText } from 'primeng/inputtext';
 import { Checkbox } from 'primeng/checkbox';
-import { Router } from '@angular/router';
+import { ToggleSwitch } from 'primeng/toggleswitch';
+import { ConfirmationService, PrimeTemplate } from 'primeng/api';
+import { Router, RouterLink } from '@angular/router';
 import { CartaService } from '../../../services/carta.service';
 import { ProductoService } from '../../../services/producto.service';
 import { SesionService } from '../../../services/sesion.service';
 import { FranjaHorariaService } from '../../../services/franja-horaria.service';
-import { Carta, Canal, DiagnosticoError, EstadoCanalProducto, Seccion } from '../../../data/cartas.model';
+import { AdicionalService } from '../../../services/adicional.service';
+import { Carta, EstadoCanalProducto, Seccion } from '../../../data/cartas.model';
 import { puedeEditarOperacion } from '../../../data/roles.model';
 import { ProductoSelectorDialog } from '../producto-selector-dialog/producto-selector-dialog';
-
-type SeveridadGlobal = 'activo' | 'pausado' | 'error';
-
-interface EstadoGlobalCanal {
-  canal: Canal;
-  texto: string;
-  severidad: SeveridadGlobal;
-}
+import { AdicionalSelectorDialog } from '../adicional-selector-dialog/adicional-selector-dialog';
+import { CanalTarjeta } from '../canal-tarjeta/canal-tarjeta';
+import { FranjaManagerDialog } from '../franja-manager-dialog/franja-manager-dialog';
 
 @Component({
   selector: 'app-carta-detail-estructura',
-  imports: [FormsModule, DecimalPipe, Button, Select, InputNumber, InputText, Checkbox, ProductoSelectorDialog],
+  imports: [
+    FormsModule,
+    DecimalPipe,
+    Button,
+    Select,
+    InputText,
+    Checkbox,
+    ToggleSwitch,
+    PrimeTemplate,
+    RouterLink,
+    ProductoSelectorDialog,
+    AdicionalSelectorDialog,
+    CanalTarjeta,
+    FranjaManagerDialog,
+  ],
   templateUrl: './carta-detail-estructura.html',
   styleUrl: './carta-detail-estructura.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,10 +47,16 @@ export class CartaDetailEstructura {
   private readonly sesionService = inject(SesionService);
   private readonly router = inject(Router);
   private readonly franjaHorariaService = inject(FranjaHorariaService);
+  private readonly adicionalService = inject(AdicionalService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   readonly carta = input.required<Carta>();
   readonly canales = this.cartaService.canales;
   readonly franjas = this.franjaHorariaService.franjas;
+  readonly tiendas = this.cartaService.tiendas;
+  /** Si la carta actual es una copia exclusiva de una tienda, el selector la muestra seleccionada
+   *  — la carta compartida (sin dueño único) deja el selector en el placeholder "Tienda". */
+  readonly tiendaActual = computed(() => this.carta().tiendaExclusivaId ?? null);
 
   /** Precio y estado por canal son dominio de Operaciones — brief v3 sección 3. */
   readonly puedeEditar = computed(() => puedeEditarOperacion(this.sesionService.rol()));
@@ -50,12 +67,24 @@ export class CartaDetailEstructura {
   readonly seccionEnRenombre = signal<string | null>(null);
   readonly nombreEnEdicion = signal('');
   readonly seccionParaAgregarId = signal<string | null>(null);
+  /** Qué producto tiene abierto el selector de adicionales (dialog), desde su fila expandida. */
+  readonly productoParaAsociarAdicionalId = signal<string | null>(null);
+  /** Keyed por grupoId (no por producto) — es la misma entidad en cualquier fila donde aparezca. */
+  readonly adicionalesExpandidos = signal<Set<string>>(new Set());
+  readonly mostrandoHorarios = signal(false);
 
   readonly secciones = computed(() => this.carta().secciones);
 
   readonly seccionActivaId = signal<string>('todas');
+  /** Buscador de productos (decisión #17) — activo, ignora la sección elegida en el nav y busca en toda la carta. */
+  readonly filtroProducto = signal('');
+  private readonly terminoBusqueda = computed(() => this.filtroProducto().trim().toLowerCase());
 
   readonly seccionesVisibles = computed(() => {
+    const termino = this.terminoBusqueda();
+    if (termino) {
+      return this.secciones().filter((s) => this.productosDe(s).some((p) => p.nombre.toLowerCase().includes(termino)));
+    }
     const activa = this.seccionActivaId();
     return activa === 'todas' ? this.secciones() : this.secciones().filter((s) => s.id === activa);
   });
@@ -74,31 +103,22 @@ export class CartaDetailEstructura {
   readonly todosLosProductosIdsCarta = computed(() => this.secciones().flatMap((s) => s.items.map((i) => i.productoId)));
   readonly idsProductosEnCarta = computed(() => new Set(this.todosLosProductosIdsCarta()));
 
-  /** Acotado a la vista actual del nav (una sección, o toda la carta si es "todas") — determina el scope de la selección masiva. */
-  readonly todosLosProductosIds = computed(() => this.seccionesVisibles().flatMap((s) => s.items.map((i) => i.productoId)));
+  /** Acotado a lo que está visible ahora (nav o búsqueda) — determina el scope de la selección masiva. */
+  readonly todosLosProductosIds = computed(() => this.seccionesVisibles().flatMap((s) => this.productosDe(s).map((p) => p.id)));
 
   readonly todosSeleccionados = computed(() => {
     const ids = this.todosLosProductosIds();
     return ids.length > 0 && ids.every((id) => this.seleccionados().has(id));
   });
 
-  readonly estadoGlobalCanales = computed<EstadoGlobalCanal[]>(() => {
-    const cartaId = this.carta().id;
-    const ids = this.todosLosProductosIdsCarta();
-    return this.canales().map((canal) => {
-      const estados = ids.map((pid) => this.cartaService.estadoCanal(cartaId, canal.id, pid)?.estado ?? 'activo');
-      const conError = estados.filter((e) => e === 'error').length;
-      if (conError > 0) return { canal, texto: `${conError} con error`, severidad: 'error' as const };
-      if (estados.length > 0 && estados.every((e) => e === 'pausado')) return { canal, texto: 'Pausado', severidad: 'pausado' as const };
-      return { canal, texto: 'Publicado', severidad: 'activo' as const };
-    });
-  });
-
   productosDe(seccion: Seccion) {
-    return seccion.items.map((item) => this.productoService.obtenerPorId(item.productoId)).filter((p) => p !== undefined);
+    const productos = seccion.items.map((item) => this.productoService.obtenerPorId(item.productoId)).filter((p) => p !== undefined);
+    const termino = this.terminoBusqueda();
+    return termino ? productos.filter((p) => p.nombre.toLowerCase().includes(termino)) : productos;
   }
 
   seleccionarSeccion(id: string): void {
+    this.filtroProducto.set('');
     this.seccionActivaId.set(id);
   }
 
@@ -118,10 +138,6 @@ export class CartaDetailEstructura {
 
   tieneOverridePrecio(productoId: string, canalId: string): boolean {
     return this.cartaService.estadoCanal(this.carta().id, canalId, productoId)?.precio !== undefined;
-  }
-
-  diagnosticoDe(productoId: string, canalId: string): DiagnosticoError | undefined {
-    return this.cartaService.estadoCanal(this.carta().id, canalId, productoId)?.diagnostico;
   }
 
   estaExpandido(productoId: string): boolean {
@@ -150,23 +166,6 @@ export class CartaDetailEstructura {
     if (!this.puedeEditar()) return;
     const nuevo = estado === 'activo' ? 'pausado' : 'activo';
     this.cartaService.setEstadoOperativo(this.carta().id, canalId, productoId, nuevo);
-  }
-
-  actualizarPrecio(productoId: string, canalId: string, valor: number): void {
-    if (!this.puedeEditar()) return;
-    const producto = this.productoService.obtenerPorId(productoId);
-    const nuevoPrecio = producto && valor === producto.precioVenta ? undefined : valor;
-    this.cartaService.setPrecioCanal(this.carta().id, canalId, productoId, nuevoPrecio);
-  }
-
-  usarPrecioBase(productoId: string, canalId: string): void {
-    if (!this.puedeEditar()) return;
-    this.cartaService.setPrecioCanal(this.carta().id, canalId, productoId, undefined);
-  }
-
-  reintentar(productoId: string, canalId: string): void {
-    if (!this.puedeEditar()) return;
-    this.cartaService.reintentar(this.carta().id, canalId, productoId);
   }
 
   /** Demo/dev only — no hay backend real que falle solo; esto existe para poder probar diagnóstico + reintento. */
@@ -211,6 +210,65 @@ export class CartaDetailEstructura {
     const cartaId = this.carta().id;
     productoIds.forEach((productoId) => this.cartaService.agregarItem(cartaId, seccionId, productoId));
     this.seccionParaAgregarId.set(null);
+  }
+
+  /** Muchos-a-muchos a nivel Marca — el producto lleva los mismos adicionales en cualquier carta donde aparezca. */
+  gruposDeProducto(productoId: string) {
+    return this.adicionalService.gruposDeProducto(productoId);
+  }
+
+  idsAdicionalesDe(productoId: string): Set<string> {
+    return new Set(this.gruposDeProducto(productoId).map((g) => g.id));
+  }
+
+  abrirAsociarAdicional(productoId: string): void {
+    if (!this.puedeEditar()) return;
+    this.productoParaAsociarAdicionalId.set(productoId);
+  }
+
+  cerrarAsociarAdicional(): void {
+    this.productoParaAsociarAdicionalId.set(null);
+  }
+
+  agregarAdicionales(productoId: string, grupoIds: string[]): void {
+    if (!this.puedeEditar()) return;
+    grupoIds.forEach((grupoId) => this.adicionalService.asociarProducto(grupoId, productoId));
+    this.cerrarAsociarAdicional();
+  }
+
+  desasociarAdicional(productoId: string, grupoId: string): void {
+    if (!this.puedeEditar()) return;
+    this.adicionalService.desasociarProducto(grupoId, productoId);
+  }
+
+  estaAdicionalExpandido(grupoId: string): boolean {
+    return this.adicionalesExpandidos().has(grupoId);
+  }
+
+  toggleAdicional(grupoId: string): void {
+    this.adicionalesExpandidos.update((set) => {
+      const copia = new Set(set);
+      if (copia.has(grupoId)) copia.delete(grupoId);
+      else copia.add(grupoId);
+      return copia;
+    });
+  }
+
+  toggleActivoAdicional(grupoId: string): void {
+    if (!this.puedeEditar()) return;
+    const grupo = this.adicionalService.obtenerPorId(grupoId);
+    if (!grupo) return;
+    this.adicionalService.actualizar(grupoId, { activo: !grupo.activo });
+  }
+
+  eliminarOpcionAdicional(grupoId: string, opcionId: string): void {
+    if (!this.puedeEditar()) return;
+    this.adicionalService.eliminarOpcion(grupoId, opcionId);
+  }
+
+  toggleDisponibleOpcion(grupoId: string, opcionId: string): void {
+    if (!this.puedeEditar()) return;
+    this.adicionalService.toggleDisponibleOpcion(grupoId, opcionId);
   }
 
   franjaDe(seccion: Seccion) {
@@ -265,6 +323,43 @@ export class CartaDetailEstructura {
     this.seccionActivaId.set(id);
     this.nombreEnEdicion.set('Nueva sección');
     this.seccionEnRenombre.set(id);
+  }
+
+  /** "Una carta puede ser asignada a todas las tiendas, o duplicarse para asignarla a otra tienda
+   *  con cambios" (pedido explícito del usuario). Elegir una tienda ya servida por ESTA carta no
+   *  hace nada (es el estado actual); elegir una servida por otra copia de la familia navega ahí;
+   *  elegir una sin copia propia ofrece duplicar. */
+  seleccionarTienda(tiendaId: string): void {
+    const cartaActual = this.carta();
+    const cartaQueSirve = this.cartaService.cartaQueSirveATienda(cartaActual.id, tiendaId);
+    if (cartaQueSirve === cartaActual.id) return;
+    if (cartaQueSirve) {
+      this.router.navigate(['/cartas', cartaQueSirve]);
+      return;
+    }
+
+    const tienda = this.tiendas().find((t) => t.id === tiendaId);
+    if (!tienda) return;
+
+    this.confirmationService.confirm({
+      header: 'Duplicar carta para esta tienda',
+      message: `"${cartaActual.nombre}" es compartida por todas las tiendas asignadas. ¿Creamos una copia exclusiva para ${tienda.nombre} que se pueda editar con cambios independientes, sin afectar al resto?`,
+      icon: 'pi pi-copy',
+      acceptLabel: 'Duplicar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        const nuevaId = this.cartaService.duplicarParaTienda(cartaActual.id, tiendaId);
+        this.router.navigate(['/cartas', nuevaId]);
+      },
+    });
+  }
+
+  abrirHorarios(): void {
+    this.mostrandoHorarios.set(true);
+  }
+
+  cerrarHorarios(): void {
+    this.mostrandoHorarios.set(false);
   }
 
   /** Nunca busca el mismo producto dos veces — lleva al producto específico en Catálogo, con retorno a esta carta. Brief v3 sección 4. */

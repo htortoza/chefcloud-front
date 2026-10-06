@@ -1,0 +1,156 @@
+/* Separador vertical entre canales con margen simétrico a los dos lados de la línea — el primero
+   de la fila no lleva margen izquierdo, el último no lleva línea ni margen derecho. `:host` en vez
+   de un `<div>` interno: este componente ES la tarjeta, no la envuelve. */
+:host {
+  flex: 1;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 1rem;
+  border-right: 1px solid var(--p-content-border-color);
+}
+
+:host(:first-child) {
+  padding-left: 0;
+}
+
+:host(:last-child) {
+  padding-right: 0;
+  border-right: none;
+}
+
+.canal-tarjeta__fila-superior {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.canal-tarjeta__nombre {
+  font-size: 0.65rem;
+  color: var(--p-text-muted-color);
+}
+
+.canal-tarjeta__candado {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+/* Título y precio son "click para editar" (`EditableTextField`), no inputs siempre visibles. */
+.canal-tarjeta__titulo-texto {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Envuelve el campo + el botón "restablecer" para que el botón quede pegado al lado del lápiz,
+   sin romper el flex:1 que necesita el campo para crecer en la fila. */
+.canal-tarjeta__campo-editable {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.canal-tarjeta__titulo-editable {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.canal-tarjeta__precio {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.canal-tarjeta__precio-editable {
+  font-weight: 500;
+}
+
+/* Botón "restablecer" (volver al valor base) al lado del lápiz de cada campo — icono solo, nunca
+   el único indicio de override (el input ya muestra el valor distinto al placeholder base). */
+.canal-tarjeta__restablecer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.canal-tarjeta__restablecer:hover {
+  color: var(--p-text-color);
+}
+
+/* `pInputText` trae su propio tamaño/padding/borde de PrimeNG — sin este override, pasar a modo
+   edición hace que el campo "salte" a un input grande entre texto chico. Lo dejamos del mismo
+   tamaño que el texto y sin caja — el botón de check que aparece al lado ya es la señal de que
+   se está editando, no hace falta además una caja de input. */
+.canal-tarjeta__titulo-editable ::ng-deep .p-inputtext,
+.canal-tarjeta__precio-editable ::ng-deep .p-inputtext,
+.canal-tarjeta__descripcion-editable ::ng-deep .p-inputtext {
+  font: inherit;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.canal-tarjeta__descripcion-fila {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  margin-top: -0.1rem;
+}
+
+.canal-tarjeta__descripcion-editable {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.68rem;
+  color: var(--p-text-muted-color);
+}
+
+/* Hasta 2 líneas (no 1 truncada a la mitad de una palabra) con interlineado chico — el texto de
+   vista (no el input de edición) es un `<span>` propio de `EditableTextField`. Centrado (no
+   `flex-start`): con descripción de una sola línea —el caso común— alineaba el lápiz contra el
+   borde superior de su propio botón con padding, quedando visiblemente más abajo que el texto. */
+.canal-tarjeta__descripcion-editable ::ng-deep .editable-text-field__valor {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.diagnostico {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--p-red-200);
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-red-50);
+  font-size: 0.75rem;
+  color: var(--p-red-700);
+}
+
+.diagnostico__meta {
+  color: var(--p-text-muted-color);
+}

@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs';
 import { Toast } from 'primeng/toast';
 import { Menu } from 'primeng/menu';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import type { MenuItem } from 'primeng/api';
 import { ITEMS_NAVEGACION } from '../../../data/shell.model';
 import { MarcaContextService } from '../../../services/marca-context.service';
@@ -12,7 +13,7 @@ import { SesionSwitcher } from '../sesion-switcher/sesion-switcher';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, SesionSwitcher, Toast, Menu],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, SesionSwitcher, Toast, Menu, ConfirmDialog],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -33,7 +33,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'EMP-001',
     categoriaId: 'categoria-entradas',
     etiquetas: ['clásico'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -47,18 +46,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'LOM-001',
     categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
-    gruposModificadores: [
-      {
-        id: 'grupo-terminos',
-        nombre: 'Término de la carne',
-        minimo: 1,
-        maximo: 1,
-        opciones: [
-          { nombre: 'Término medio', precio: 0, disponible: true },
-          { nombre: 'Bien cocido', precio: 0, disponible: true },
-        ],
-      },
-    ],
     activo: true,
   },
   {
@@ -71,7 +58,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'BEB-001',
     categoriaId: 'categoria-bebidas',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -84,7 +70,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'CAU-001',
     categoriaId: 'categoria-entradas',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -97,7 +82,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'CEV-001',
     categoriaId: 'categoria-entradas',
     etiquetas: ['sin gluten'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -110,7 +94,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'ARR-001',
     categoriaId: 'categoria-platos',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -123,19 +106,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'POL-001',
     categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
-    gruposModificadores: [
-      {
-        id: 'grupo-acompanamiento',
-        nombre: 'Acompañamiento',
-        minimo: 1,
-        maximo: 1,
-        opciones: [
-          { nombre: 'Papas fritas', precio: 0, disponible: true },
-          { nombre: 'Ensalada', precio: 0, disponible: true },
-          { nombre: 'Arroz chaufa', precio: 800, disponible: true },
-        ],
-      },
-    ],
     activo: true,
   },
   {
@@ -148,7 +118,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'BEB-002',
     categoriaId: 'categoria-bebidas',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -161,7 +130,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'BEB-003',
     categoriaId: 'categoria-bebidas',
     etiquetas: ['con alcohol'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -174,7 +142,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'POS-001',
     categoriaId: 'categoria-postres',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -187,7 +154,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'POS-002',
     categoriaId: 'categoria-postres',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -200,7 +166,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'ANT-001',
     categoriaId: 'categoria-entradas',
     etiquetas: ['clásico'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -213,7 +178,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'TAC-001',
     categoriaId: 'categoria-platos',
     etiquetas: ['best-seller'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -226,7 +190,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'BEB-004',
     categoriaId: 'categoria-bebidas',
     etiquetas: ['con alcohol'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -239,7 +202,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'POS-003',
     categoriaId: 'categoria-postres',
     etiquetas: ['clásico'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -252,7 +214,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'SOP-001',
     categoriaId: 'categoria-sopas',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -265,7 +226,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'SOP-002',
     categoriaId: 'categoria-sopas',
     etiquetas: ['clásico'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -278,7 +238,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'SAN-001',
     categoriaId: 'categoria-sandwiches',
     etiquetas: ['best-seller'],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -291,7 +250,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'SAN-002',
     categoriaId: 'categoria-sandwiches',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -304,7 +262,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'GUA-001',
     categoriaId: 'categoria-guarniciones',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
   {
@@ -317,7 +274,6 @@ const PRODUCTOS_MOCK: Producto[] = [
     sku: 'GUA-002',
     categoriaId: 'categoria-guarniciones',
     etiquetas: [],
-    gruposModificadores: [],
     activo: true,
   },
 ];
@@ -341,7 +297,7 @@ export class ProductoService {
     return this._productos().find((p) => p.id === id);
   }
 
-  crear(payload: CrearProductoPayload): void {
+  crear(payload: CrearProductoPayload): string {
     const nuevo: Producto = {
       id: siguienteId('producto'),
       marcaId: this.marcaContextService.marcaActiva().id,
@@ -349,6 +305,7 @@ export class ProductoService {
       ...payload,
     };
     this._productos.update((lista) => [...lista, nuevo]);
+    return nuevo.id;
   }
 
   actualizar(id: string, cambios: Partial<Omit<Producto, 'id' | 'marcaId'>>): void {

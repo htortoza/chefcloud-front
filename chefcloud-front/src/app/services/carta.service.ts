@@ -21,19 +21,8 @@ function snapshotDe(carta: Carta): string {
   return JSON.stringify({
     nombre: carta.nombre,
     descripcionInterna: carta.descripcionInterna,
-    tipoVigencia: carta.tipoVigencia,
-    rangoFechas: carta.rangoFechas,
-    franjaEspecial: carta.franjaEspecial,
     secciones: carta.secciones,
   });
-}
-
-function franjasSePisan(a: NonNullable<Carta['franjaEspecial']>, b: NonNullable<Carta['franjaEspecial']>): boolean {
-  return a === 'todo-dia' || b === 'todo-dia' || a === b;
-}
-
-function rangosSePisan(a: { desde: string; hasta: string }, b: { desde: string; hasta: string }): boolean {
-  return a.desde <= b.hasta && b.desde <= a.hasta;
 }
 
 const MARCA_ID_MOCK = 'marca-1';
@@ -48,7 +37,6 @@ const CARTAS_SEED: Carta[] = (
       nombre: 'Menú Regular',
       descripcionInterna: 'Carta base del local — rota entre almuerzo y cena por sección',
       estado: 'publicada',
-      tipoVigencia: 'regular',
       franjaId: FRANJA_GENERAL_ID,
       secciones: [
         {
@@ -102,29 +90,6 @@ const CARTAS_SEED: Carta[] = (
         },
       ],
     },
-    {
-      id: 'carta-seed-2',
-      marcaId: MARCA_ID_MOCK,
-      nombre: 'Fiestas Patrias',
-      descripcionInterna: 'Carta especial para el 18 y 19 de septiembre',
-      estado: 'borrador',
-      tipoVigencia: 'fecha-especial',
-      rangoFechas: { desde: '2026-09-18', hasta: '2026-09-19' },
-      franjaEspecial: 'todo-dia',
-      franjaId: 'franja-almuerzo',
-      secciones: [
-        {
-          id: 'seccion-seed-6',
-          nombre: 'Parrilla criolla',
-          orden: 0,
-          franjaId: FRANJA_GENERAL_ID,
-          items: [
-            { productoId: 'producto-6', orden: 0 },
-            { productoId: 'producto-2', orden: 1 },
-          ],
-        },
-      ],
-    },
   ] as Carta[]
 ).map((carta) =>
   carta.estado === 'publicada'
@@ -135,7 +100,6 @@ const CARTAS_SEED: Carta[] = (
 const ASIGNACIONES_SEED: Asignacion[] = [
   { id: 'asignacion-seed-1', cartaId: 'carta-seed-1', tiendaId: 'tienda-1' },
   { id: 'asignacion-seed-2', cartaId: 'carta-seed-1', tiendaId: 'tienda-2' },
-  { id: 'asignacion-seed-3', cartaId: 'carta-seed-2', tiendaId: 'tienda-3' },
 ];
 
 const ESTADOS_CANAL_SEED: EstadoCanalCarta[] = [
@@ -184,7 +148,6 @@ export class CartaService {
       nombre,
       descripcionInterna: '',
       estado: 'borrador',
-      tipoVigencia: 'regular',
       franjaId: FRANJA_GENERAL_ID,
       secciones: [],
     };
@@ -196,7 +159,7 @@ export class CartaService {
     this._cartas.update((lista) => lista.map((c) => (c.id === cartaId ? mutar(c) : c)));
   }
 
-  actualizarGeneral(cartaId: string, cambios: Partial<Pick<Carta, 'nombre' | 'descripcionInterna' | 'tipoVigencia' | 'rangoFechas' | 'franjaEspecial'>>): void {
+  actualizarGeneral(cartaId: string, cambios: Partial<Pick<Carta, 'nombre' | 'descripcionInterna'>>): void {
     this.mutarCarta(cartaId, (c) => ({ ...c, ...cambios }));
   }
 
@@ -265,25 +228,9 @@ export class CartaService {
     return TIENDAS_MOCK.filter((t) => idsAsignados.includes(t.id));
   }
 
-  /** Solo valida solapamiento entre cartas de fecha especial — las regulares rotan por sección, no chocan entre sí. */
   asignar(cartaId: string, tiendaId: string): { ok: true } | { ok: false; conflicto: string } {
     const carta = this._cartas().find((c) => c.id === cartaId);
     if (!carta) return { ok: false, conflicto: 'La carta no existe' };
-
-    if (carta.tipoVigencia === 'fecha-especial' && carta.rangoFechas && carta.franjaEspecial) {
-      const otrasCartasEnTienda = this._asignaciones()
-        .filter((a) => a.tiendaId === tiendaId && a.cartaId !== cartaId)
-        .map((a) => this._cartas().find((c) => c.id === a.cartaId))
-        .filter((c): c is Carta => !!c && c.tipoVigencia === 'fecha-especial' && !!c.rangoFechas && !!c.franjaEspecial);
-
-      const conflicto = otrasCartasEnTienda.find(
-        (otra) => rangosSePisan(carta.rangoFechas!, otra.rangoFechas!) && franjasSePisan(carta.franjaEspecial!, otra.franjaEspecial!),
-      );
-
-      if (conflicto) {
-        return { ok: false, conflicto: `Se superpone con "${conflicto.nombre}" en esa tienda y rango de fechas` };
-      }
-    }
 
     this._asignaciones.update((lista) => [...lista, { id: siguienteId('asignacion'), cartaId, tiendaId }]);
     return { ok: true };
@@ -299,6 +246,12 @@ export class CartaService {
 
   estadosDeCartaYCanal(cartaId: string, canalId: string): EstadoCanalCarta[] {
     return this._estadosCanal().filter((e) => e.cartaId === cartaId && e.canalId === canalId);
+  }
+
+  /** Todos los overrides de este producto, en cualquier carta y canal — usado para avisar desde
+   *  Catálogo que hay overrides que podrían quedar desalineados al cambiar el valor base. */
+  estadosCanalDeProducto(productoId: string): EstadoCanalCarta[] {
+    return this._estadosCanal().filter((e) => e.productoId === productoId);
   }
 
   private upsertEstadoCanal(cartaId: string, canalId: string, productoId: string, cambios: Partial<Omit<EstadoCanalCarta, 'cartaId' | 'canalId' | 'productoId'>>): void {
@@ -348,4 +301,57 @@ export class CartaService {
     return this._cartas().filter((c) => c.secciones.some((s) => s.items.some((i) => i.productoId === productoId))).length;
   }
 
+  /** Cuenta productos×canal en error dentro de esta carta — insight accionable para el listado de Cartas. */
+  erroresDeCarta(cartaId: string): number {
+    return this._estadosCanal().filter((e) => e.cartaId === cartaId && e.estado === 'error').length;
+  }
+
+  /** Tiendas de la marca que no tienen ninguna carta asignada — gap operacional que el listado de Cartas no mostraba. */
+  tiendasSinCarta(): TiendaMock[] {
+    const idsAsignados = new Set(this._asignaciones().map((a) => a.tiendaId));
+    return TIENDAS_MOCK.filter((t) => !idsAsignados.has(t.id));
+  }
+
+  /** Carta compartida + todas sus copias por tienda (mismo origen — ver `tiendaExclusivaId`/`cartaOrigenId`). */
+  familiaDeCarta(cartaId: string): Carta[] {
+    const carta = this._cartas().find((c) => c.id === cartaId);
+    if (!carta) return [];
+    const origenId = carta.cartaOrigenId ?? carta.id;
+    return this._cartas().filter((c) => c.id === origenId || c.cartaOrigenId === origenId);
+  }
+
+  /** Qué carta de la familia de `cartaId` sirve hoy a `tiendaId` (si alguna) — usado por el
+   *  selector "Tienda" en Estructura para decidir entre navegar a una copia existente o proponer duplicar. */
+  cartaQueSirveATienda(cartaId: string, tiendaId: string): string | undefined {
+    return this.familiaDeCarta(cartaId).find((c) => this.tiendasAsignadas(c.id).some((t) => t.id === tiendaId))?.id;
+  }
+
+  /** "Una carta puede ser asignada a todas las tiendas, o duplicarse para asignarla a otra tienda
+   *  con cambios" (pedido explícito del usuario) — copia secciones/items y overrides por canal
+   *  (arranca idéntica, para que "con cambios" sea divergir desde ahí, no desde cero), y mueve la
+   *  asignación de `tiendaId`: la saca de la carta original y la deja exclusiva de la copia nueva. */
+  duplicarParaTienda(cartaId: string, tiendaId: string): string {
+    const original = this._cartas().find((c) => c.id === cartaId)!;
+    const id = siguienteId('carta');
+    const nueva: Carta = {
+      id,
+      marcaId: original.marcaId,
+      nombre: original.nombre,
+      descripcionInterna: original.descripcionInterna,
+      estado: 'borrador',
+      franjaId: original.franjaId,
+      secciones: JSON.parse(JSON.stringify(original.secciones)),
+      tiendaExclusivaId: tiendaId,
+      cartaOrigenId: original.cartaOrigenId ?? original.id,
+    };
+    this._cartas.update((lista) => [...lista, nueva]);
+
+    const overridesOriginal = this._estadosCanal().filter((e) => e.cartaId === cartaId).map((e) => ({ ...e, cartaId: id }));
+    this._estadosCanal.update((lista) => [...lista, ...overridesOriginal]);
+
+    this.desasignar(cartaId, tiendaId);
+    this.asignar(id, tiendaId);
+
+    return id;
+  }
 }

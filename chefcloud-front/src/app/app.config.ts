@@ -14,6 +14,13 @@ const GRADIENTE_MARCA = 'linear-gradient(90deg, {orange.400} 0%, {pink.500} 65%)
 const GRADIENTE_MARCA_HOVER = 'linear-gradient(90deg, {orange.500} 0%, {pink.600} 65%)';
 
 const MotorPromocionesPreset = definePreset(Aura, {
+  primitive: {
+    // Naranja de marca propio en vez del naranja por defecto de Aura (#fb923c) — define
+    // var(--p-orange-400) para toda la app (degradado de botones, login, sidebar), un solo lugar.
+    orange: {
+      400: '#fb683c',
+    },
+  },
   semantic: {
     primary: {
       50: '{pink.50}',

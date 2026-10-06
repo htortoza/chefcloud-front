@@ -1,168 +1,210 @@
-<p-drawer
+<p-dialog
   [(visible)]="visible"
-  position="right"
-  [style]="cartaId() ? { width: '52rem' } : { width: '28rem' }"
+  [modal]="true"
+  [draggable]="false"
   appendTo="body"
   [header]="producto() ? 'Editar producto' : 'Nuevo producto'"
+  [style]="{ width: '78vw', maxWidth: '68rem' }"
+  [contentStyle]="{ maxHeight: '78vh', overflowY: 'auto' }"
   (onHide)="cerrar.emit()"
 >
-  <p-fluid class="producto-form">
-    @if (cartaId()) {
-      <p-button label="← Volver a la carta" [text]="true" class="producto-form__volver" (onClick)="volverALaCarta()" />
-    }
+  @if (cartaId()) {
+    <button type="button" class="producto-form__volver" (click)="volverALaCarta()">← Volver a la carta</button>
+  }
 
-    <div class="producto-form__campo">
-      Foto
-      <div class="producto-form__foto">
-        @if (form.foto()) {
-          <img [src]="form.foto()" alt="" class="producto-form__foto-preview" />
-        } @else {
-          <div class="producto-form__foto-placeholder">Foto</div>
-        }
-        <!-- ponytail: subida real de imágenes pendiente de definir (dónde se almacenan) — botón sin función todavía -->
-        <p-button label="Subir foto" [text]="true" size="small" [disabled]="editandoExistente() && !puedeEditar()" />
-      </div>
-    </div>
-
-    <label class="producto-form__campo">
-      Nombre
-      <input
-        pInputText
-        type="text"
-        [disabled]="editandoExistente() && !puedeEditar()"
-        [ngModel]="form.nombre()"
-        (ngModelChange)="actualizarNombreBase($event)"
-      />
-    </label>
-
-    <label class="producto-form__campo">
-      Descripción
-      <input
-        pInputText
-        type="text"
-        [disabled]="editandoExistente() && !puedeEditar()"
-        [ngModel]="form.descripcion()"
-        (ngModelChange)="actualizarDescripcionBase($event)"
-      />
-    </label>
-
-    <label class="producto-form__campo">
-      SKU
-      <input pInputText type="text" [ngModel]="form.sku()" (ngModelChange)="form.sku.set($event)" />
-    </label>
-
-    <label class="producto-form__campo">
-      Categoría
-      <p-select
-        [options]="categorias()"
-        optionLabel="nombre"
-        optionValue="id"
-        [ngModel]="form.categoriaId()"
-        (ngModelChange)="form.categoriaId.set($event)"
-      />
-    </label>
-
-    <label class="producto-form__campo">
-      Precio de venta
-      @if (editandoExistente() && !puedeEditarPrecioBase()) {
-        <span class="producto-form__precio-bloqueado"><i class="pi pi-lock"></i> {{ form.precioVenta() | number: '1.0-0' }} — se edita desde Estructura (Operaciones)</span>
-      } @else {
-        <p-inputNumber [ngModel]="form.precioVenta()" (ngModelChange)="actualizarPrecioVentaBase($event)" mode="decimal" />
-      }
-    </label>
-
-    <label class="producto-form__campo">
-      Precio de oferta (opcional)
-      <p-inputNumber [ngModel]="form.precioOferta()" (ngModelChange)="form.precioOferta.set($event)" mode="decimal" />
-    </label>
-
-    <label class="producto-form__campo">
-      Precio de costo
-      <p-inputNumber [ngModel]="form.precioCosto()" (ngModelChange)="form.precioCosto.set($event)" mode="decimal" />
-    </label>
-
-    <div class="producto-form__grupos">
-      <span>Grupos de modificadores</span>
-      @for (grupo of grupos(); track $index) {
-        <div class="producto-form__grupo">
-          <input pInputText type="text" placeholder="Nombre del grupo" [ngModel]="grupo.nombre()" (ngModelChange)="grupo.nombre.set($event)" />
-          <p-inputNumber placeholder="Mín." [ngModel]="grupo.minimo()" (ngModelChange)="grupo.minimo.set($event)" />
-          <p-inputNumber placeholder="Máx." [ngModel]="grupo.maximo()" (ngModelChange)="grupo.maximo.set($event)" />
-          <p-button icon="pi pi-trash" [text]="true" (onClick)="eliminarGrupoModificador($index)" />
-        </div>
-      }
-      <p-button label="Agregar grupo" [text]="true" (onClick)="agregarGrupoModificador()" />
-    </div>
-
-    <p-button label="Guardar" (onClick)="guardar()" />
-
-    @if (cartaId(); as cid) {
-      @if (producto(); as p) {
-        <div class="producto-form__por-canal">
-          <span class="producto-form__por-canal-titulo">Por canal</span>
-          <div class="producto-form__canales-grid">
-            @for (canal of canales(); track canal.id) {
-              <div class="canal-marketing-tarjeta">
-                <div class="canal-marketing-tarjeta__header">
-                  <span class="canal-marketing-tarjeta__nombre">{{ canal.nombre }}</span>
-                  <span class="pastilla" [attr.data-estado]="estadoCanalMostrado(canal.id)" title="Editable solo desde Estructura (Operaciones)">
-                    <i
-                      [class]="
-                        estadoCanalMostrado(canal.id) === 'activo'
-                          ? 'pi pi-check'
-                          : estadoCanalMostrado(canal.id) === 'pausado'
-                            ? 'pi pi-pause'
-                            : 'pi pi-exclamation-triangle'
-                      "
-                    ></i>
-                    <span>{{ estadoCanalMostrado(canal.id) === 'activo' ? 'Activo' : estadoCanalMostrado(canal.id) === 'pausado' ? 'Pausado' : 'Error' }}</span>
-                    <i class="pi pi-lock"></i>
-                  </span>
-                </div>
-
-                <label class="producto-form__campo">
-                  Nombre en este canal
-                  <input
-                    pInputText
-                    type="text"
-                    [placeholder]="p.nombre"
-                    [disabled]="!puedeEditar()"
-                    [ngModel]="nombreCanal(canal.id) ?? ''"
-                    (ngModelChange)="actualizarNombreCanal(canal.id, $event)"
-                  />
-                  @if (nombreCanal(canal.id)) {
-                    <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarNombreBaseCanal(canal.id)">
-                      Usar nombre base
-                    </button>
-                  }
-                </label>
-
-                <label class="producto-form__campo">
-                  Descripción en este canal
-                  <input
-                    pInputText
-                    type="text"
-                    [placeholder]="p.descripcion"
-                    [disabled]="!puedeEditar()"
-                    [ngModel]="descripcionCanal(canal.id) ?? ''"
-                    (ngModelChange)="actualizarDescripcionCanal(canal.id, $event)"
-                  />
-                  @if (descripcionCanal(canal.id)) {
-                    <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarDescripcionBaseCanal(canal.id)">
-                      Usar descripción base
-                    </button>
-                  }
-                </label>
-
-                <span class="canal-marketing-tarjeta__precio">
-                  <i class="pi pi-lock"></i>
-                  Precio: {{ precioCanalMostrado(canal.id) | number: '1.0-0' }} — solo Operaciones
-                </span>
-              </div>
+  <div class="producto-form">
+    <div class="producto-form__columnas">
+      <div class="producto-form__identidad">
+        <div class="producto-form__campo">
+          Foto
+          <div class="producto-form__foto">
+            @if (form.foto()) {
+              <img [src]="form.foto()" alt="" class="producto-form__foto-preview" />
+            } @else {
+              <div class="producto-form__foto-placeholder"><i class="pi pi-image"></i></div>
             }
+            <!-- ponytail: subida real de imágenes pendiente de definir (dónde se almacenan) — botón sin función todavía -->
+            <p-button label="Subir foto" [text]="true" size="small" [disabled]="editandoExistente() && !puedeEditar()" />
           </div>
         </div>
-      }
-    }
-  </p-fluid>
-</p-drawer>
+
+        <label class="producto-form__campo">
+          Nombre
+          <input
+            pInputText
+            type="text"
+            [disabled]="editandoExistente() && !puedeEditar()"
+            [ngModel]="form.nombre()"
+            (ngModelChange)="actualizarNombreBase($event)"
+          />
+        </label>
+
+        <label class="producto-form__campo">
+          Descripción
+          <textarea
+            pTextarea
+            rows="3"
+            [disabled]="editandoExistente() && !puedeEditar()"
+            [ngModel]="form.descripcion()"
+            (ngModelChange)="actualizarDescripcionBase($event)"
+          ></textarea>
+        </label>
+
+        <label class="producto-form__campo">
+          SKU
+          <input pInputText type="text" [ngModel]="form.sku()" (ngModelChange)="form.sku.set($event)" />
+        </label>
+
+        <label class="producto-form__campo">
+          Categoría
+          <p-select
+            [options]="categorias()"
+            optionLabel="nombre"
+            optionValue="id"
+            [ngModel]="form.categoriaId()"
+            (ngModelChange)="form.categoriaId.set($event)"
+          />
+        </label>
+      </div>
+
+      <div class="producto-form__principal">
+        <section class="producto-form__seccion">
+          <h3 class="producto-form__seccion-titulo">Precios</h3>
+          <div class="producto-form__precios">
+            <label class="producto-form__campo">
+              Precio de venta
+              @if (editandoExistente() && !puedeEditarPrecioBase()) {
+                <span class="producto-form__precio-bloqueado"
+                  ><i class="pi pi-lock"></i> {{ form.precioVenta() | number: '1.0-0' }} — se edita desde Estructura (Operaciones)</span
+                >
+              } @else {
+                <p-inputNumber [ngModel]="form.precioVenta()" (ngModelChange)="actualizarPrecioVentaBase($event)" mode="decimal" />
+              }
+            </label>
+
+            <label class="producto-form__campo">
+              Precio de oferta (opcional)
+              <p-inputNumber [ngModel]="form.precioOferta()" (ngModelChange)="form.precioOferta.set($event)" mode="decimal" />
+            </label>
+
+            <label class="producto-form__campo">
+              Precio de costo
+              <p-inputNumber [ngModel]="form.precioCosto()" (ngModelChange)="form.precioCosto.set($event)" mode="decimal" />
+            </label>
+          </div>
+        </section>
+
+        @if (editandoExistente()) {
+          <section class="producto-form__seccion">
+            <h3 class="producto-form__seccion-titulo">Adicionales</h3>
+            <div class="producto-form__adicionales">
+              @for (grupo of gruposAsociados(); track grupo.id) {
+                <span class="adicional-chip-mini">
+                  {{ grupo.nombre }}
+                  <button
+                    type="button"
+                    [disabled]="!puedeEditarPrecioBase()"
+                    aria-label="Quitar adicional"
+                    (click)="quitarAdicional(grupo.id)"
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
+                </span>
+              } @empty {
+                <span class="producto-form__vacio">Sin adicionales asociados.</span>
+              }
+            </div>
+            <p-button label="+ Añadir adicional" [text]="true" size="small" [disabled]="!puedeEditarPrecioBase()" (onClick)="abrirSelectorAdicionales()" />
+          </section>
+        }
+
+        @if (cartaId(); as cid) {
+          @if (producto(); as p) {
+            <section class="producto-form__seccion">
+              <h3 class="producto-form__seccion-titulo">Por canal</h3>
+              <div class="producto-form__canales-grid">
+                @for (canal of canales(); track canal.id) {
+                  <div class="canal-marketing-tarjeta">
+                    <div class="canal-marketing-tarjeta__header">
+                      <span class="canal-marketing-tarjeta__nombre">{{ canal.nombre }}</span>
+                      <span class="pastilla" [attr.data-estado]="estadoCanalMostrado(canal.id)" title="Editable solo desde Estructura (Operaciones)">
+                        <i
+                          [class]="
+                            estadoCanalMostrado(canal.id) === 'activo'
+                              ? 'pi pi-check'
+                              : estadoCanalMostrado(canal.id) === 'pausado'
+                                ? 'pi pi-pause'
+                                : 'pi pi-exclamation-triangle'
+                          "
+                        ></i>
+                        <span>{{ estadoCanalMostrado(canal.id) === 'activo' ? 'Activo' : estadoCanalMostrado(canal.id) === 'pausado' ? 'Pausado' : 'Error' }}</span>
+                        <i class="pi pi-lock"></i>
+                      </span>
+                    </div>
+
+                    <label class="producto-form__campo">
+                      Nombre en este canal
+                      <input
+                        pInputText
+                        type="text"
+                        [placeholder]="p.nombre"
+                        [disabled]="!puedeEditar()"
+                        [ngModel]="nombreCanal(canal.id) ?? ''"
+                        (ngModelChange)="actualizarNombreCanal(canal.id, $event)"
+                      />
+                      @if (nombreCanal(canal.id)) {
+                        <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarNombreBaseCanal(canal.id)">
+                          Usar nombre base
+                        </button>
+                      }
+                    </label>
+
+                    <label class="producto-form__campo">
+                      Descripción en este canal
+                      <input
+                        pInputText
+                        type="text"
+                        [placeholder]="p.descripcion"
+                        [disabled]="!puedeEditar()"
+                        [ngModel]="descripcionCanal(canal.id) ?? ''"
+                        (ngModelChange)="actualizarDescripcionCanal(canal.id, $event)"
+                      />
+                      @if (descripcionCanal(canal.id)) {
+                        <button type="button" class="canal-tarjeta__reset" [disabled]="!puedeEditar()" (click)="usarDescripcionBaseCanal(canal.id)">
+                          Usar descripción base
+                        </button>
+                      }
+                    </label>
+
+                    <label class="producto-form__campo">
+                      Precio en este canal
+                      @if (puedeEditarPrecioBase()) {
+                        <p-inputNumber [ngModel]="precioCanalMostrado(canal.id)" (ngModelChange)="actualizarPrecioCanal(canal.id, $event)" mode="decimal" />
+                        @if (tieneOverridePrecioCanal(canal.id)) {
+                          <button type="button" class="canal-tarjeta__reset" (click)="usarPrecioBaseCanal(canal.id)">Usar precio base</button>
+                        }
+                      } @else {
+                        <span class="producto-form__precio-bloqueado"
+                          ><i class="pi pi-lock"></i> {{ precioCanalMostrado(canal.id) | number: '1.0-0' }} — solo Operaciones</span
+                        >
+                      }
+                    </label>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" [text]="true" (onClick)="cerrarDrawer()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="guardar()" />
+  </ng-template>
+</p-dialog>
+
+@if (mostrandoSelectorAdicionales()) {
+  <app-adicional-selector-dialog [gruposYaAsociados]="idsAdicionalesAsociados()" (agregar)="agregarAdicionales($event)" (cerrar)="cerrarSelectorAdicionales()" />
+}
